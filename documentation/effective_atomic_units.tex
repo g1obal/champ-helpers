@@ -1,0 +1,122 @@
+\documentclass[a4paper,12pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, top=2.5cm, left=2.5cm, right=2.5cm, bottom=2.5cm]{geometry}
+
+\usepackage{indentfirst}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{color}
+\usepackage{subfigure}
+\usepackage[toc,page]{appendix}
+\usepackage[nottoc]{tocbibind}
+
+% Title Page
+\title{Effective Atomic Units}
+\author{Gökhan Öztarhan}
+\date{17 September 2020}
+
+
+\begin{document}
+\maketitle
+
+\chapter*{Effective Atomic Units}
+
+Calculation of atomic units may vary for several materials. Since many aspects
+of atomic units consist of quantities depending on the materials,
+those quantities should be taken into account. The most important quantities
+are effective mass of the electrons $m^{*}$ and the dielectric constant $\kappa$
+for a given material. Additionally, Landé g-factor $g^{*}$ should be known if
+there are calculations related to magnetism. In the following sections,
+atomic unit calculations are given.
+
+\section*{Atomic unit of length, Bohr radius} \label{bohr}
+Bohr radius is given as
+\begin{align}
+    a_{0} = \frac{4 \pi \varepsilon_{0} \hbar^{2}}{m_{e} e^{2}}
+          = 5.291772109 \times 10^{-11} \ \textrm{m}
+\end{align}
+where $\varepsilon_{0}$ is the vacuum permitivity, $\hbar$ is the reduced
+Planck's constant, $m_{e}$ is the mass of the free electrons and $e$ is the
+charge of the electrons. For calculation of atomic units, we multiply the
+given value of Bohr radius by the ratios of the electric permitivity and the
+electron masses instead of calculating whole equation in order to preserve the
+numerical accuracy as much as possible. Let us define ratio of the effective
+mass of the electrons inside the material relative to the free electron mass as
+\begin{align}
+    m_{r} = \frac{m^{*}}{m_{e}}
+\end{align}
+On the other hand, the dielectric constant, or the relative permitivity, is
+already the ratio of the permitivity of the material $\varepsilon$ relative to
+the vacuum permivitivy $\varepsilon_{0}$, and expressed as
+\begin{align}
+    \kappa = \frac{\varepsilon}{\varepsilon_{0}}
+\end{align}
+If the Bohr radius $a_{0}$ is multiplied by $\kappa/m_{r}$, the effective Bohr
+radius is obtained as below.
+\begin{align}
+    a^{*}_{0} &= a_{0} \frac{\kappa}{m_{r}} \nonumber \\
+              &= \frac{4 \pi \varepsilon_{0} \hbar^{2}}{m_{e} e^{2}}
+              \frac{\varepsilon}{\varepsilon_{0}} \frac{m_{e}}{m^{*}}
+              = \frac{4 \pi \varepsilon \hbar^{2}}{m^{*} e^{2}}
+\end{align}
+Thus, the effective atomic unit of length is 
+\begin{align} \label{effective_bohr}
+    \boxed{ a^{*}_{0} = a_{0} \frac{\kappa}{m_{r}} }
+\end{align} 
+The conversion of a length $\ell$ to atomic units for a given material is
+the following.
+\begin{align}
+    \boxed{ \ell^{*} = \frac{\ell}{a^{*}_{0}} }
+\end{align} 
+Therefore, using equation \ref{effective_bohr};
+\begin{align}
+    \boxed{ \ell^{*} = \ell \left( a_{0} \frac{\kappa}{m_{r}} \right) ^{-1}}
+\end{align} 
+
+\section*{Atomic unit of energy, Hartree energy} \label{hartree}
+The atomic unit of energy, the Hartree energy, can be expressed as
+\begin{align}
+    E_{h} = m_{e} \left( \frac{e^{2}}{4 \pi \varepsilon_{0} \hbar} \right)^{2}
+          = 27.211386245988 \ \textrm{eV}
+\end{align}
+We will calculate the effective Hartree energy with a similar calculation in
+previous section. The effective Hartree energy for a given material
+can be calculated via multiplying the Hartree energy by $m_{r}/\kappa^{2}$,
+where $m_{r} = m^{*}/m_{e}$ and $\kappa = \varepsilon/\varepsilon_{0}$.
+\begin{align}
+    E^{*}_{h} &= E_{h} \frac{m_{r}}{\kappa^{2}} \nonumber \\
+              &= m_{e} \left( \frac{e^{2}}{4 \pi \varepsilon_{0} \hbar} \right)^{2}
+              \frac{m^{*}}{m_{e}} \left(\frac{\varepsilon_{0}}{\varepsilon}\right)^{2}
+              = m^{*} \left( \frac{e^{2}}{4 \pi \varepsilon \hbar} \right)^{2}
+\end{align}
+Thus, the effective atomic unit of energy is
+\begin{align} \label{effective_hartree}
+    \boxed{ E^{*}_{h} = E_{h} \frac{m_{r}}{\kappa^{2}} }
+\end{align}
+The conversion of an energy $E$ to atomic units for a given material is
+the following.
+\begin{align}
+    \boxed{ E^{*} = \frac{E}{E^{*}_{h}} }
+\end{align} 
+Therefore, using \ref{effective_hartree};
+\begin{align}
+    \boxed{ E^{*} = E \left( E_{h} \frac{m_{r}}{\kappa^{2}} \right)^{-1} }
+\end{align} 
+
+\section*{Effective atomic units for GaAs}
+The effective mass of the electrons in GaAs is $m^{*}=0.067m_{e}$, the
+dielectric constant is $\kappa=12.4$, and the Landé g-factor is $g^{*} = -0.44$
+as given in \cite{devrimguclu_1}. Thus, the corresponding atomic units are
+\begin{align}
+a^{*}_{0} &= 9.793727485 \times 10^{-9} \ \textrm{m} \nonumber \\
+E^{*}_{h} &= 0.011857198741 \ \textrm{eV} \nonumber
+\end{align}
+
+\bibliographystyle{plain}
+\bibliography{effective_atomic_units}
+
+
+\end{document}          
+

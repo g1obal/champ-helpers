@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#SBATCH --job-name=vmc
+
+#SBATCH -p mid2
+#SBATCH --ntasks 4
+#SBATCH --time=8-00:00:00
+
+# #SBATCH -p hamsi
+# #SBATCH --ntasks 28
+# #SBATCH --time=3-00:00:00
+
+# #SBATCH --nodes 1
+# #SBATCH --account=...
+
+#SBATCH --output=output_file
+#SBATCH --error=slurm-%j.err
+
+module purge # remove any modules that were loaded on the client server
+module load centos7.3/comp/gcc/7
+module load centos7.3/lib/openmpi/4.0.1-gcc-7.0.1
+
+# SLURM_JOB_ID is printed to run_info file in run_slurm.sh
+echo "SLURM_NODELIST = $SLURM_NODELIST" >> run_info
+
+# run modes: vmc_mov1_mpi, dmc_mov1_mpi1, dmc_mov1_mpi2, dmc_mov1_mpi3
+mpirun $HOME/programs/CHAMP/qmc/champ_mpi.exe -m vmc_mov1_mpi -i input_file
+
