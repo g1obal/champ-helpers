@@ -21,7 +21,7 @@
 #
 # Author: Gokhan Oztarhan
 # Created date: 19/02/2022
-# Last modified: 23/11/2022
+# Last modified: 27/11/2022
 
 N_CPU_PER_JOB=8
 MAX_JOBS=5
@@ -78,13 +78,12 @@ while (( $ipaths < ${#paths[@]} )) ; do
     if (( `jobs -rp | wc -l` < $MAX_JOBS )) ; then
         pushd ${paths[$ipaths]} > /dev/null
 
-        # https://stackoverflow.com/a/66112173/13893858
-        # The default behavior of Open MPI is --bind-to core. 
-        # If more than one MPI jobs are started from terminal, 
-        # they all pin task 0 on cpu 0, and task 1 on cpu 1, 
-        # so they end up time sharing the first N cores. 
-        # Here, -bind-to none is used to prevent Open MPI from binding the
-        # MPI tasks. This lets the Linux scheduler use all the available cores.
+        # Open MPI "--bind-to core" is the default setting. If more than one MPI
+        # jobs are started from the same bash script or terminal, the processes
+        # of all MPI jobs (indicated by -np flag) share the first N cores. Thus, 
+        # time sharing of the cores slows the execution of MPI processes.
+        # Use "--bind-to none" to let the Linux scheduler use all the available
+        # cores. Source: https://stackoverflow.com/a/66112173/13893858
         mpirun -np $N_CPU_PER_JOB --use-hwthread-cpus --bind-to none \
         $CHAMP ${MODE[$RUN_MODE]} -i $INPUT_FILE_NAME > $OUTPUT_FILE_NAME &
 

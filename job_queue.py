@@ -22,7 +22,7 @@ mpirun -np 2 champ_mpi.exe -m dmc_mov1_mpi3 -i input >output
 
 Author: Gokhan Oztarhan
 Created date: 15/01/2020
-Last modified: 23/11/2022
+Last modified: 27/11/2022
 """
 
 import os
@@ -141,21 +141,18 @@ def job_queue():
     
 def is_running(pid):     
     """
-    Check pid is running.
+    Check if pid is running using os.kill(pid, 0).
     
     Bash equivalent: 'kill -0 pid' 
     '-0' flag just checks whether pid is running and accesible or not.
     It does not send any signal.
     
-    Copying from stackoverflow: https://stackoverflow.com/a/7654102/13893858
-    1) If the process exists and belongs to you, the call succeeds.
-    2) If the process exists but belong to another user, 
-       it throws an OSError with the errno attribute set to errno.EPERM.
-    3) If the process does not exist, 
-       it throws an OSError with the errno attribute set to errno.ESRCH.
-       
-    errno.EPERM: Operation not permitted
-    errno.ESRCH: No such process
+    No Error: The process exists.
+    errno.EPERM: Operation not permitted.
+                 The process exists but does not belong to user.
+    errno.ESRCH: No such process.
+    
+    Source: https://stackoverflow.com/a/7654102/13893858
     """   
     try:
         os.kill(pid, 0)
