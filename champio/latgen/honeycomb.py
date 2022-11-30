@@ -31,10 +31,10 @@ def honeycomb(
     n_side : int
         number of points on one side of the flk_type
     width : int, optional
-        vertical width of rectangular flk_type,
+        vertical width of nanoribbon flk_type,
         vertical number of points
     bc : str, optional
-        boundary condition for rectangular flk_type
+        boundary condition for nanoribbon flk_type
     com_to_origin : bool, optional
         shift center of mass to origin
 
@@ -107,7 +107,7 @@ def honeycomb(
         %(2 * ind_NN_2nd.shape[0], cpu_time)
     ) 
     
-    # Apply boundary conditions for rectangular
+    # Apply boundary conditions for nanoribbon
     if flk_type == 'nanoribbon':
         ind_drop, ind_NN, ind_NN_2nd, cpu_time = \
             _boundary_condition(a, bc, pos, ind_NN, ind_NN_2nd)
@@ -589,7 +589,7 @@ def nanoribbon(a, n_side, width, **kwargs):
     xl = -n_side*a*np.sqrt(3)/2 \
          - (1 + np.mod(n_side,2))*a*np.sqrt(3)/2 - a*np.sqrt(3)/2/2
     
-    # Removing the elements which are out of the rectangular boundaries
+    # Removing the elements which are out of the nanoribbon boundaries
     ind = np.arange(pos.shape[0])
     ind = ind[pos[ind,0] < xr]
     ind = ind[pos[ind,0] > xl]

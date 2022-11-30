@@ -43,10 +43,10 @@ class Lattice():
         number of points on one side of the flk_type
     width : int, optional
         multiple of 2
-        vertical width of rectangular flk_type,
+        vertical width of nanoribbon flk_type,
         vertical number of points
     bc : str, optional
-        boundary condition for rectangular flk_type
+        boundary condition for nanoribbon flk_type
     com_to_origin : bool, optional
         shift center of mass to origin
     debug : bool, optional
