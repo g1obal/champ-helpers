@@ -8,8 +8,8 @@
 # Modify CHAMP variable for your CHAMP path.
 # 
 # MAX_JOBS is the maximum number of jobs to run simultaneously.
-# MAX_JOBS * N_CPU_PER_JOB should be lower than (or equal to) the maximum of
-# CPUs available in the system !!
+# MAX_JOBS * N_CPU_PER_JOB should be lower than (or equal to) the maximum number
+# of cores available in the system !!
 #
 # Directory names should not include spaces or special characters !!
 #
