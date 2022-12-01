@@ -24,8 +24,8 @@ versions.
 ## Installation
 Installation is not required since all scripts work as long as *champio*
 package is located in the same directory with the corresponding script (or
-included in PATH variable), and the environment meets the library/package 
-requirements.
+included in PYTHONPATH environment variable), and the environment meets the 
+library/package requirements.
 
 If the package is installed, *champio* package does not have to be in the same
 directory with the scripts that are used.
