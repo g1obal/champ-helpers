@@ -3,15 +3,16 @@ Logger initializer
 
 Author: Gokhan Oztarhan
 Created date: 06/12/2021
-Last modified: 23/01/2022
+Last modified: 04/12/2022
 """
 
+import sys
 import logging
 
 
 def set_logger(
     verbose_file=1, verbose_console=1, 
-    filename='log.log', filemode='w', terminator=''
+    filename='logfile', filemode='w', terminator=''
 ):
     log_formatter = logging.Formatter('%(message)s')
     
@@ -26,7 +27,7 @@ def set_logger(
         logger.addHandler(file_handler)
     
     if verbose_console:
-        stream_handler = logging.StreamHandler()
+        stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.terminator = terminator
         stream_handler.setFormatter(log_formatter)
         stream_handler.setLevel(logging.INFO)
