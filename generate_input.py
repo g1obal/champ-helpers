@@ -5,7 +5,7 @@ Generating inputs for CHAMP program.
 
 Author: Gokhan Oztarhan
 Created date: 09/06/2019
-Last modified: 16/10/2022
+Last modified: 14/01/2023
 """
 
 import os
@@ -64,12 +64,22 @@ CONFIG = {
                    # 3: triangular_armchair, 
                    # 4: nanoribbon
 
+    # [electron]
+    'total_charge': None, # set total number of electrons, nelec
+                          # None or 0 for charge neutral system
+    'Sz': None, # total spin; to calculate the number of up and down electrons
+                # None to arrange nup and ndn according to Lieb's theorem
+    'spin_order': 'AFM', # electrons are located in a spin order
+                         # AFM: antiferromagnetic, FM: ferromagnetic
+    'spin_order_direction': 1, # the direction in which electrons are located
+                               # 0: add electrons from outside to inside, 
+                               #    additional electrons from inside to outside.   
+                               # 1: add electrons from inside to outside, 
+                               #    additional electrons from outside to inside.  
+
     # [orbital]
     'orb_dot_coef': 0, # 0: gauss, 1: orbitals read from orb_dot_coef file 
                        # >0: overwrites spin_order
-    'spin_order': 'antiferromagnetic', # antiferromagnetic or ferromagnetic
-                                       # if ferromagnetic then nup=nelec
-    'Sz': None, # optional, overwrites spin_order nup value
 
     # [random seed champ]
     'irn': 'auto', # 'auto': automatically set random seed using os.urandom
@@ -156,13 +166,16 @@ def generate_input_multiple():
     now = datetime.datetime.now()
     string = 'generate_input_multiple\n' + now.strftime('%Y-%m-%d %H:%M:%S\n\n')
     print(string, end='')  
-                 
+    
     # Set dynamical variables
+    total_charge = None
+    Sz = None
+    spin_order = 'AFM'
+    spin_order_direction = 1
+    
     info = 'gauss'
     orb_dot_coef = 0 # 0: gauss, 1: orbitals read from orb_dot_coef file 
                      # >0: overwrites spin_order
-    spin_order = 'antiferromagnetic'
-    Sz = None
     
     gndot_v0_listoflist = [
         [-38.48],
@@ -232,9 +245,13 @@ def generate_input_multiple():
                         'gauss_sigma': gauss_sigma,
                         
                         'info': info,
-                        'orb_dot_coef': orb_dot_coef,
-                        'spin_order': spin_order,
+                        
+                        'total_charge': total_charge,
                         'Sz': Sz,
+                        'spin_order': spin_order,
+                        'spin_order_direction': spin_order_direction,
+                        
+                        'orb_dot_coef': orb_dot_coef,
                     }
                     
                     run_dir = ''

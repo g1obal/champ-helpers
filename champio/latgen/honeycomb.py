@@ -3,7 +3,7 @@ Honeycomb Lattice Generator
 
 Author: Gokhan Oztarhan
 Created date: 09/06/2019
-Last modified: 21/07/2022
+Last modified: 09/01/2023
 """
 
 import time
@@ -69,7 +69,7 @@ def honeycomb(
     }  
 
     ind, pos, sub, m, n, \
-    n_total, n_NN, n_side, cpu_time = _FLAKE_FUNC[flk_type](
+    n_site, n_NN, n_side, cpu_time = _FLAKE_FUNC[flk_type](
         a, n_side, width=width, **kwargs
     )
                               
@@ -84,7 +84,7 @@ def honeycomb(
         + 'a = %.5e\n' %(a) \
         + 'flk_type = %s\n' %(flk_type) \
         + 'n_side = %i\n' %(n_side) \
-        + 'n_total calc/found = %i/%i\n' %(n_total, pos.shape[0])   
+        + 'n_site calc/found = %i/%i\n' %(n_site, pos.shape[0])   
     )  
     
     # Distances between all pair of sites
@@ -135,7 +135,7 @@ def honeycomb(
         logger.info(
             'width = %i\n' %(width) \
             + 'bc = %s\n' %(bc) \
-            + 'n_total after boundary conditions = %i\n' \
+            + 'n_site after boundary conditions = %i\n' \
                 %(pos.shape[0])
             + '1st NN after boundary conditions = %i\n' \
                 %(2 * ind_NN.shape[0])
@@ -454,8 +454,8 @@ def hexagonal_zigzag(a, n_side, **kwargs):
     """Generator for hexagonal flake with zigzag edges."""
     tic = time.time()  
     
-    # Calculate the total number of dots
-    n_total = (n_side**2)*6
+    # Calculate the total number of lattice sites
+    n_site = (n_side**2)*6
       
     # Generate honeycomb lattice
     pos, sub, m, n = _generate(a,n_side+2,0)
@@ -469,10 +469,10 @@ def hexagonal_zigzag(a, n_side, **kwargs):
     ind = _interior_elements_convex(pos,vertex)
 
     # 1st nearest neighbor count
-    n_NN = 2*(n_side*6) + 3*(n_total-(n_side*6))   
+    n_NN = 2*(n_side*6) + 3*(n_site-(n_side*6))   
     
     toc = time.time()            
-    return ind, pos, sub, m, n, n_total, n_NN, n_side, toc-tic 
+    return ind, pos, sub, m, n, n_site, n_NN, n_side, toc-tic 
     
     
 def hexagonal_armchair(a, n_side, **kwargs):
@@ -484,8 +484,8 @@ def hexagonal_armchair(a, n_side, **kwargs):
     elif n_side % 2 != 0:
         n_side = n_side + 1        
     
-    # Calculate the total number of dots
-    n_total = (np.sum(np.arange(n_side//2,0,-1) - 1)*6 + 1)*6  
+    # Calculate the total number of lattice sites
+    n_site = (np.sum(np.arange(n_side//2,0,-1) - 1)*6 + 1)*6  
     
     # Generate honeycomb lattice
     pos, sub, m, n = _generate(a,n_side+2,0)
@@ -499,18 +499,18 @@ def hexagonal_armchair(a, n_side, **kwargs):
     ind = _interior_elements_convex(pos,vertex)
 
     # 1st nearest neighbor count
-    n_NN = 2*((n_side-1)*6) + 3*(n_total-((n_side-1)*6))
+    n_NN = 2*((n_side-1)*6) + 3*(n_site-((n_side-1)*6))
     
     toc = time.time()          
-    return ind, pos, sub, m, n, n_total, n_NN, n_side, toc-tic 
+    return ind, pos, sub, m, n, n_site, n_NN, n_side, toc-tic 
     
     
 def triangular_zigzag(a, n_side, **kwargs):
     """Generator for triangular flake with zigzag edges."""
     tic = time.time()       
     
-    # Calculate the total number of dots
-    n_total = np.sum(np.arange(3,3+n_side*2,2)) + n_side*2 + 1 
+    # Calculate the total number of lattice sites
+    n_site = np.sum(np.arange(3,3+n_side*2,2)) + n_side*2 + 1 
 
     # Generate honeycomb lattice
     pos, sub, m, n = _generate(a,n_side+2,0)
@@ -530,10 +530,10 @@ def triangular_zigzag(a, n_side, **kwargs):
     ind = np.delete(ind,np.argmax(pos[ind,1]),0)
 
     # 1st nearest neighbor count
-    n_NN = 2*(3 + n_side*3) + 3*(n_total-(3 + n_side*3))
+    n_NN = 2*(3 + n_side*3) + 3*(n_site-(3 + n_side*3))
     
     toc = time.time()  
-    return ind, pos, sub, m, n, n_total, n_NN, n_side, toc-tic 
+    return ind, pos, sub, m, n, n_site, n_NN, n_side, toc-tic 
     
     
 def triangular_armchair(a, n_side, **kwargs):
@@ -545,8 +545,8 @@ def triangular_armchair(a, n_side, **kwargs):
     elif n_side % 2 != 0:
         n_side = n_side + 1       
         
-    # Calculate the total number of dots    
-    n_total = np.sum(np.arange(1,n_side//2 + 1))*6
+    # Calculate the total number of lattice sites
+    n_site = np.sum(np.arange(1,n_side//2 + 1))*6
         
     # Generate honeycomb lattice
     pos, sub, m, n = _generate(a,n_side+2,1)
@@ -560,10 +560,10 @@ def triangular_armchair(a, n_side, **kwargs):
     ind = _interior_elements_convex(pos,vertex)
     
     # 1st nearest neighbor count
-    n_NN = 2*(n_side*3) + 3*(n_total-n_side*3)
+    n_NN = 2*(n_side*3) + 3*(n_site-n_side*3)
     
     toc = time.time()
-    return ind, pos, sub, m, n, n_total, n_NN, n_side, toc-tic  
+    return ind, pos, sub, m, n, n_site, n_NN, n_side, toc-tic  
     
     
 def nanoribbon(a, n_side, width, **kwargs):
@@ -573,8 +573,8 @@ def nanoribbon(a, n_side, width, **kwargs):
     if width % 2 != 0: 
         width = width + 1 
   
-    # Calculate the total number of dots  
-    n_total = ((2*n_side) + 1)*width
+    # Calculate the total number of lattice sites
+    n_site = ((2*n_side) + 1)*width
 
     # Generate honeycomb lattice
     pos, sub, m, n = _generate(a,np.max([n_side,width])+2,0)
@@ -597,10 +597,10 @@ def nanoribbon(a, n_side, width, **kwargs):
     ind = ind[pos[ind,1] > yb]
     
     # 1st nearest neighbor count
-    n_NN = 2*(2*n_side+2*width) + 3*(n_total-(2*n_side+2*width))
+    n_NN = 2*(2*n_side+2*width) + 3*(n_site-(2*n_side+2*width))
         
     toc = time.time()
-    return ind, pos, sub, m, n, n_total, n_NN, n_side, toc-tic 
+    return ind, pos, sub, m, n, n_site, n_NN, n_side, toc-tic 
 
 #------------------------------------------------------------------------------
 

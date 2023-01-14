@@ -3,7 +3,7 @@ Writer module for InputGenerator
 
 Author: Gokhan Oztarhan
 Created date: 11/06/2019
-Last modified: 26/11/2022
+Last modified: 14/01/2023
 """
 
 import time
@@ -119,7 +119,7 @@ def inputwriter(inputgenerator):
     info_str = '(iwtype(i),i=1,ncent)'
     input_str += generate_line(settings_str, info_str)
     
-    s1 = '{:.8f} '.format(np.float(inputgenerator.znuc)) 
+    s1 = '{:.8f} '.format(inputgenerator.znuc) 
     settings_str = s1
     info_str = '(znuc(i),i=1,nctype)'
     input_str += generate_line(settings_str, info_str)
@@ -171,11 +171,11 @@ def inputwriter(inputgenerator):
     input_str += generate_line(settings_str, info_str)
     
     s1 = ''
-    for i in np.sort(inputgenerator.ind_up):
+    for i in inputgenerator.ind_up:
         s1 += '{:d} '.format(i)
     s2 = ''
-    for i in np.sort(inputgenerator.ind_dn):
-        s2 += '{:d} '.format(i)   
+    for i in inputgenerator.ind_dn:
+        s2 += '{:d} '.format(i)
     settings_str = ' '.join([s1,s2])
     info_str = '(iworbd(j,idet),j=1,nelec)'
     input_str += generate_line(settings_str, info_str)
@@ -263,9 +263,9 @@ def inputwriter(inputgenerator):
 
     s1 = '{:3d}'.format(inputgenerator.nopt_iter) # nopt_iter
     s2 = '{:d}'.format(inputgenerator.nblk_max) # nblk_max
-    s3 = '{:.0e}'.format(np.float(-5.e-1)).replace('e', 'd') # add_diag(1)
+    s3 = '{:.0e}'.format(-5.e-1).replace('e', 'd') # add_diag(1)
     s4 = '{:.2f}'.format(inputgenerator.p_var) # p_var
-    s5 = '{:.0e}'.format(np.float(1.e-8)).replace('e', 'd') # tol_energy
+    s5 = '{:.0e}'.format(1.e-8).replace('e', 'd') # tol_energy
     settings_str = ' '.join([s1,s2,s3,s4,s5])
     info_str = 'nopt_iter,nblk_max,add_diag(1),p_var,tol_energy'
     input_str += generate_line(settings_str, info_str)
@@ -332,7 +332,7 @@ def inputwriter(inputgenerator):
     
     s1 = ''
     for i in range(inputgenerator.nparml):
-        s1 += '{:d} '.format(np.int(0))
+        s1 += '{:d} '.format(0)
     settings_str = s1
     info_str = '(iworb(iparm),iwbasi(iparm),iparm=1,nparml)'
     input_str += generate_line(settings_str, info_str)    
@@ -346,7 +346,7 @@ def inputwriter(inputgenerator):
 
     s1 = ''
     for i in range(inputgenerator.nparmcsf):
-        s1 += '{:d} '.format(np.int(0))
+        s1 += '{:d} '.format(0)
     settings_str = s1
     info_str = '(iwcsf(iparm),iparm=1,nparmcsf)'
     input_str += generate_line(settings_str, info_str)   
@@ -399,8 +399,8 @@ def inputwriter(inputgenerator):
     input_str += generate_line(settings_str, info_str) 
     
     settings_str = '0 0 0'
-    if ( inputgenerator.opt_constraint ):
-        settings_str = '0 0 {:d}'.format(inputgenerator.norb-1)
+    if inputgenerator.opt_constraint:
+        settings_str = '0 0 {:d}'.format(inputgenerator.nbasis - 1)
     info_str = '(norb_constraints(i),i=1,notype)' \
                + ' - 0 means no constraint to orbitals'
     input_str += generate_line(settings_str, info_str) 
@@ -414,8 +414,8 @@ def inputwriter(inputgenerator):
     input_str += generate_line(settings_str, info_str)  
 
     settings_str = ''
-    if ( inputgenerator.opt_constraint ):
-        for i in range(2,inputgenerator.norb+1):
+    if inputgenerator.opt_constraint:
+        for i in range(2,inputgenerator.nbasis + 1):
             settings_str += '{:d} 1 '.format(i) 
     else:
         settings_str += ' '

@@ -3,7 +3,7 @@ Input Generator class
 
 Author: Gokhan Oztarhan
 Created date: 18/06/2019
-Last modified: 16/10/2022
+Last modified: 14/01/2023
 """
 
 from os import urandom
@@ -76,23 +76,33 @@ class InputGenerator():
         self.width = 4 # for nanoribbon
         self.bc = 'xy' # for nanoribbon
         self.lat_type = 'honeycomb'
-        self.flk_type = 1 # hexagonal_zigzag=0, 
-                          # hexagonal_armchair=1, 
-                          # triangular_zigzag=2, 
-                          # triangular_armchair=3, 
-                          # nanoribbon=4
-
+        self.flk_type = 1 # 0: hexagonal_zigzag, 
+                          # 1: hexagonal_armchair, 
+                          # 2: triangular_zigzag, 
+                          # 3: triangular_armchair, 
+                          # 4: nanoribbon
+        
+        # [electron]
+        self.total_charge = None # set total number of electrons, nelec
+                                 # None or 0 for charge neutral system
+        self.Sz = None # total spin;
+                       # to calculate the number of up and down electrons
+                       # None to arrange nup and ndn according to Lieb's theorem
+        self.spin_order = 'AFM' # electrons are located in a spin order
+                                # AFM: antiferromagnetic, FM: ferromagnetic
+        self.spin_order_direction = 1 # the direction in which electrons are 
+                                      # located
+                                      # 0: add electrons from outside to inside, 
+                                      #    additional electrons from inside to 
+                                      #    outside.
+                                      # 1: add electrons from inside to outside, 
+                                      #    additional electrons from outside to 
+                                      #    inside.
+        
         # [orbital]
         # orb_dot_coef, >0: overwrites spin_order
         # 0: gauss, 1: orbitals read from orb_dot_coef file 
-        self.orb_dot_coef = 0 
-        
-        # spin_order, antiferromagnetic or ferromagnetic
-        # if ferromagnetic then nup=nelec
-        self.spin_order = 'antiferromagnetic'
-        
-        # Sz, optional, overwrites spin_order nup value
-        self.Sz = None
+        self.orb_dot_coef = 0
         
         # [random seed champ]
         # irn: a string of 16 digit integer
@@ -209,19 +219,20 @@ class InputGenerator():
             com_to_origin = False
 
         lattice = Lattice(
-            self.lat_type, self._FLK_TYPE[self.flk_type], 
+            self.lat_type, self._FLK_TYPE[self.flk_type],
             self.a_au, self.n_side, width=self.width, bc=self.bc,
             com_to_origin=com_to_origin
         )
         
-        self.ncent = lattice.n_total
-        self.nelec = self.ncent
-        
-        lattice.set_spin(
-            self.nelec, 
-            spin_order=self.spin_order, 
-            Sz=self.Sz
+        lattice.set(
+            total_charge=self.total_charge,
+            Sz=self.Sz,
+            spin_order=self.spin_order,
+            spin_order_direction=self.spin_order_direction
         )
+        
+        self.ncent = lattice.n_site
+        self.nelec = lattice.n_elec
         
         self.pos = lattice.pos
         self.ind_NN = lattice.ind_NN
@@ -230,18 +241,21 @@ class InputGenerator():
         self.ndn = lattice.n_dn
         
         # Fortran indices start from 1
-        if self.orb_dot_coef == 0:
-            self.ind_up = lattice.ind_up + 1
-            self.ind_dn = lattice.ind_dn + 1
-        else:
+        if self.orb_dot_coef:
             self.ind_up = np.arange(1, self.nup + 1)
             self.ind_dn = np.arange(self.nup + 1, self.nelec + 1)
+        else:
+            self.ind_up = lattice.ind_up + 1
+            self.ind_dn = lattice.ind_dn + 1
         
-        self.nbasis = self.nelec
+        self.nbasis = self.ncent
         
-        self.norb = self.nbasis
+        if self.orb_dot_coef:
+            self.norb = self.nelec
+        else:
+            self.norb = self.nbasis
         
-        self.znuc = self.nelec / self.ncent
+        self.znuc = float(self.nelec) / self.ncent
         
         self.latmax = np.abs(lattice.pos).max().max()
         self.xmax = self.latmax + self.gauss_sigma_au + self.a_au
