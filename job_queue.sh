@@ -21,7 +21,7 @@
 #
 # Author: Gokhan Oztarhan
 # Created date: 19/02/2022
-# Last modified: 27/11/2022
+# Last modified: 18/01/2023
 
 N_CPU_PER_JOB=8
 MAX_JOBS=5
@@ -33,6 +33,7 @@ SLEEP_INTERVAL=5
 
 INPUT_FILE_NAME="input_file"
 OUTPUT_FILE_NAME="output_file"
+ERROR_FILE_NAME="error_file"
 
 CHAMP="$HOME/programs/CHAMP/qmc/champ_mpi.exe"
 
@@ -85,7 +86,8 @@ while (( $ipaths < ${#paths[@]} )) ; do
         # Use "--bind-to none" to let the Linux scheduler use all the available
         # cores. Source: https://stackoverflow.com/a/66112173/13893858
         mpirun -np $N_CPU_PER_JOB --use-hwthread-cpus --bind-to none \
-        $CHAMP ${MODE[$RUN_MODE]} -i $INPUT_FILE_NAME > $OUTPUT_FILE_NAME &
+        $CHAMP ${MODE[$RUN_MODE]} -i $INPUT_FILE_NAME 1> $OUTPUT_FILE_NAME \
+        2> $ERROR_FILE_NAME &
 
         PID_champ=$!
         echo "PID_bash = $$" > run_info

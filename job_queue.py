@@ -22,7 +22,7 @@ mpirun -np 2 champ_mpi.exe -m dmc_mov1_mpi3 -i input >output
 
 Author: Gokhan Oztarhan
 Created date: 15/01/2020
-Last modified: 27/11/2022
+Last modified: 18/01/2023
 """
 
 import os
@@ -42,6 +42,7 @@ SLEEP = 5
 
 INPUT_FILE_NAME = 'input_file'
 OUTPUT_FILE_NAME = 'output_file'
+ERROR_FILE_NAME = 'error_file'
 
 MPIRUN = '/usr/bin/mpirun' # use '$ which mpirun' to find mpirun path
 HOME = os.path.expanduser('~')
@@ -56,10 +57,11 @@ MODE = {
 
 def run_champ():
     run_command = ' '.join([
-        MPIRUN, '-n %d --use-hwthread-cpus --bind-to none' %(N_CPU), 
+        MPIRUN, '-n %d --use-hwthread-cpus --bind-to none' %(N_CPU),
         CHAMP, MODE[RUN_MODE],
-        '-i', INPUT_FILE_NAME, 
-        '>', OUTPUT_FILE_NAME, 
+        '-i', INPUT_FILE_NAME,
+        '1>', OUTPUT_FILE_NAME,
+        '2>', ERROR_FILE_NAME,
         '&', 'echo $!',
     ])
     
