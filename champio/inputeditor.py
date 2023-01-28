@@ -6,7 +6,7 @@ Updates optimized parameters using output file.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 20/11/2022
+Last modified: 29/01/2023
 """
 
 import os
@@ -136,6 +136,30 @@ class InputEditor():
             settings_str = ' '.join(line[:5])
             info_str = ' '.join(line[5:])
             self.data[ind] = generate_line(settings_str, info_str)  
+            
+    def edit_nconf_new(self, nconf_new):
+        if nconf_new is not None:
+            string = 'nstep,nblk,nblkeq,nconf,nconf_new' 
+            ind, line = get_lines(string, self.data, first_occurance=True)
+            line = line.split()
+            
+            line[4] = '%d' %(nconf_new)
+            
+            settings_str = ' '.join(line[:5])
+            info_str = ' '.join(line[5:])
+            self.data[ind] = generate_line(settings_str, info_str)  
+            
+    def edit_isite(self, isite):
+        if isite is not None:
+            string = 'idump,irstar,isite,ipr' 
+            ind, line = get_lines(string, self.data, first_occurance=True)
+            line = line.split()
+            
+            line[2] = '%d' %(isite)
+            
+            settings_str = ' '.join(line[:4])
+            info_str = ' '.join(line[4:])
+            self.data[ind] = generate_line(settings_str, info_str)
             
     def edit_delta(self, acceptance, delta):
         if delta is not None:
@@ -289,6 +313,37 @@ class InputEditor():
                 %new_params[-1])
         else:
             print('[InputEditor] update_jastrow: new_params = None')
+            
+    def generate_mc_configs(self, root, files):
+        mc_configs = []
+        i = 0
+        for f in files:
+            if 'mc_configs_new' in f:
+                with open(os.path.join(root, f), 'r') as f_temp:
+                    mc_configs += f_temp.readlines()
+                    i += 1
+        
+        if not mc_configs:
+            f_callback = os.path.join(root, 'mc_configs_start')
+            if os.path.exists(f_callback):
+                with open(f_callback, 'r') as f_temp:
+                    mc_configs += f_temp.readlines()
+                    i += 1
+        
+        print('[InputEditor] generate_mc_configs: ' \
+            + 'mc_configs files found = %i' %i)
+        
+        if mc_configs:
+            mc_configs_shuffle = []
+            iskip = len(mc_configs) // i
+            for j in range(iskip):
+                mc_configs_shuffle += mc_configs[j::iskip]
+
+            with open(os.path.join(root, 'mc_configs'), 'w') as f:
+                f.writelines(mc_configs_shuffle)
+            
+            print('[InputEditor] generate_mc_configs: ' \
+                + '# of lines in mc_configs = %i' %len(mc_configs_shuffle))
 
     def commit(self, fname):
         with open(os.path.join(self.path, fname), 'w') as f:
