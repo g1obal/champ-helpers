@@ -3,7 +3,7 @@ CHAMP Data Reader and Extrapolated Estimator Calculator
 
 Author: Gokhan Oztarhan
 Created date: 24/06/2022
-Last modified: 23/11/2022
+Last modified: 06/02/2023
 """
 
 import sys
@@ -18,11 +18,11 @@ import pandas as pd
 from champio.outputparser import OutputParser
 
 
-MPI2_MEAN = True
+MPI2_MEAN = False
 DATA_MEAN_FILE_NAME = 'runs_mean.pkl'
 
 VMC_ROOT_DIR = '../vmc/den'
-DMC_ROOT_DIR = '../dmc/mpi2_mean'
+DMC_ROOT_DIR = '../dmc/mpi2'
 OUTPUT_FILE_NAME = 'output_file'
 
 EXTRAPOLATED_FILE_NAME = 'runs_ext.pkl'
@@ -100,7 +100,11 @@ def get_data_ext():
     while True:
         try:
             parser_vmc, parser_dmc = next(iterator)
-
+            
+            # Path info
+            print('vmc path: %s\n' %parser_vmc.path \
+                + 'dmc path: %s' %parser_dmc.path)
+            
             # Calculate den2d related extrapolated estimators
             parser_dmc = den2d_ext(parser_vmc, parser_dmc)
             
@@ -124,17 +128,9 @@ def get_data_ext():
                 [df_SI, parser_dmc.dataframe()], ignore_index=True, axis=0
             )
             
-            print(
-                'Done OutputParser. \n' \
-                + 'vmc path: %s\n' %parser_vmc.path \
-                + 'dmc path: %s\n' %parser_dmc.path
-            )
+            print('Done.\n')
         except OSError as err:
-            print(
-                '%s in files: \n' %type(err).__name__ \
-                + 'vmc path: %s\n' %parser_vmc.path \
-                + 'dmc path: %s\n' %parser_dmc.path
-            )
+            print('%s in files.\n' %type(err).__name__)
         except StopIteration:
             break
             
@@ -149,7 +145,7 @@ def get_data_ext():
     
     toc = time.time() 
     print("Execution time, get_data_ext = %.3f s" %(toc-tic))
- 
+
 
 def get_parser_vmc_dmc(run_dir):
     # Parse VMC output file
@@ -177,8 +173,8 @@ def get_parser_vmc_dmc(run_dir):
     parser_dmc.parse()  
     
     return parser_vmc, parser_dmc
-    
-    
+
+
 def get_parser_vmc_dmc_mean(data):
     run_dir = data['run_dir']
 
@@ -207,102 +203,125 @@ def get_parser_vmc_dmc_mean(data):
         parser_dmc.a = A
     
     return parser_vmc, parser_dmc
-       
-        
+
+
 def den2d_ext(parser_vmc, parser_dmc):
-    # Extrapolated estimator for den2d        
-    parser_dmc.den2d_t[:,:,2] = 2 * parser_dmc.den2d_t[:,:,2] \
-                                - parser_vmc.den2d_t[:,:,2]
-    parser_dmc.den2d_s[:,:,2] = 2 * parser_dmc.den2d_s[:,:,2] \
-                                - parser_vmc.den2d_s[:,:,2]
+    try:
+        # Extrapolated estimator for den2d        
+        parser_dmc.den2d_t[:,:,2] = 2 * parser_dmc.den2d_t[:,:,2] \
+                                    - parser_vmc.den2d_t[:,:,2]
+        parser_dmc.den2d_s[:,:,2] = 2 * parser_dmc.den2d_s[:,:,2] \
+                                    - parser_vmc.den2d_s[:,:,2]
 
-    # Integral of total electron density
-    dx = parser_dmc.den2d_t[1,0,0] - parser_dmc.den2d_t[0,0,0]
-    dy = parser_dmc.den2d_t[0,1,1] - parser_dmc.den2d_t[0,0,1]
-    parser_dmc.den2d_nelec_calc = np.trapz(
-        np.trapz(parser_dmc.den2d_t[:,:,2], dx=dx, axis=0), dx=dy, axis=0
-    )
-    
-    # Normalization of spin density:
-    # Integral of absolute value of spin density should be equal to 
-    # integral of total electron density if spins are perfectly polarized.
-    # While calculated extrapolated estimator for spin density,
-    # if VMC spin density is close to metallic phase and DMC spin density
-    # is close to antiferromagnetic phase, resulting extrapolated spin density
-    # would be an antiferromagnetic phase however the normalization of it
-    # would be corrupted (since 2*DMC - VMC). It should be corrected using
-    # integral of total electron density.
-    abs_den2d_s_sum = np.trapz(
-        np.trapz(np.abs(parser_dmc.den2d_s[:,:,2]), dx=dx, axis=0), 
-        dx=dy, axis=0
-    )
-    
-    # Normalize spin density
-    if abs_den2d_s_sum > parser_dmc.den2d_nelec_calc:
-        parser_dmc.den2d_s[:,:,2] *= \
-            parser_dmc.den2d_nelec_calc / abs_den2d_s_sum
-    
-    # Calculate real space spin-spin correlation for density 
-    parser_dmc.ss_corr_den = \
-        parser_dmc._ss_corr(parser_dmc.den2d_t, parser_dmc.den2d_s)
+        # Integral of total electron density
+        dx = parser_dmc.den2d_t[1,0,0] - parser_dmc.den2d_t[0,0,0]
+        dy = parser_dmc.den2d_t[0,1,1] - parser_dmc.den2d_t[0,0,1]
+        parser_dmc.den2d_nelec_calc = np.trapz(
+            np.trapz(parser_dmc.den2d_t[:,:,2], dx=dx, axis=0), dx=dy, axis=0
+        )
         
-    # Calculate edge polarization for density
-    parser_dmc.edge_pol_den = parser_dmc._edge_pol(parser_dmc.den2d_s)
-
+        # Normalization of spin density:
+        # Integral of absolute value of spin density should be equal to 
+        # integral of total electron density if spins are perfectly polarized.
+        # While calculating extrapolated estimator for spin density,
+        # if VMC spin density is close to metallic phase and DMC spin density
+        # is close to antiferromagnetic phase, resulting extrapolated spin 
+        # density would be an antiferromagnetic phase however the normalization 
+        # of it would be corrupted (since 2*DMC - VMC). It should be corrected 
+        # using integral of total electron density.
+        abs_den2d_s_sum = np.trapz(
+            np.trapz(np.abs(parser_dmc.den2d_s[:,:,2]), dx=dx, axis=0), 
+            dx=dy, axis=0
+        )
+        
+        # Normalize spin density
+        if abs_den2d_s_sum > parser_dmc.den2d_nelec_calc:
+            parser_dmc.den2d_s[:,:,2] *= \
+                parser_dmc.den2d_nelec_calc / abs_den2d_s_sum
+        
+        # Calculate real space spin-spin correlation for density 
+        parser_dmc.ss_corr_den = \
+            parser_dmc._ss_corr(parser_dmc.den2d_t, parser_dmc.den2d_s)
+            
+        # Calculate edge polarization for density
+        parser_dmc.edge_pol_den = parser_dmc._edge_pol(parser_dmc.den2d_s)
+    
+    except (TypeError, AttributeError) as err:
+        print('%s in den2d_ext.' %type(err).__name__)
+        parser_dmc.den2d_t = np.nan
+        parser_dmc.den2d_s = np.nan
+        parser_dmc.den2d_nelec_calc = np.nan
+        parser_dmc.ss_corr_den = np.nan
+        parser_dmc.edge_pol_den = np.nan
+    
     return parser_dmc
 
 
 def pairden_ext(parser_vmc, parser_dmc):
-    # Extrapolated estimator for pairden
-    parser_dmc.pairden_dd[:,:,2] = 2 * parser_dmc.pairden_dd[:,:,2] \
-                                   - parser_vmc.pairden_dd[:,:,2]
-    parser_dmc.pairden_dt[:,:,2] = 2 * parser_dmc.pairden_dt[:,:,2] \
-                                   - parser_vmc.pairden_dt[:,:,2]
-    parser_dmc.pairden_du[:,:,2] = 2 * parser_dmc.pairden_du[:,:,2] \
-                                   - parser_vmc.pairden_du[:,:,2]
-    parser_dmc.pairden_ud[:,:,2] = 2 * parser_dmc.pairden_ud[:,:,2] \
-                                   - parser_vmc.pairden_ud[:,:,2]
-    parser_dmc.pairden_ut[:,:,2] = 2 * parser_dmc.pairden_ut[:,:,2] \
-                                   - parser_vmc.pairden_ut[:,:,2]
-    parser_dmc.pairden_uu[:,:,2] = 2 * parser_dmc.pairden_uu[:,:,2] \
-                                   - parser_vmc.pairden_uu[:,:,2]
-    parser_dmc.pairden_t[:,:,2] = 2 * parser_dmc.pairden_t[:,:,2] \
-                                  - parser_vmc.pairden_t[:,:,2]                             
-    parser_dmc.pairden_s[:,:,2] = 2 * parser_dmc.pairden_s[:,:,2] \
-                                  - parser_vmc.pairden_s[:,:,2]
-         
-    # Integration variables (for normalization)
-    dx = parser_dmc.pairden_dd[1,0,0] - parser_dmc.pairden_dd[0,0,0]
-    dy = parser_dmc.pairden_dd[0,1,1] - parser_dmc.pairden_dd[0,0,1]    
-           
-    # Normalization of spin density:
-    # Integral of absolute value of spin density should be equal to 
-    # integral of total electron density if spins are perfectly polarized.
-    # While calculated extrapolated estimator for spin density,
-    # if VMC spin density is close to metallic phase and DMC spin density
-    # is close to antiferromagnetic phase, resulting extrapolated spin density
-    # would be an antiferromagnetic phase however the normalization of it
-    # would be corrupted (since 2*DMC - VMC). It should be corrected using
-    # integral of total electron density.
-    pairden_t_sum = np.trapz(
-        np.trapz(parser_dmc.pairden_t[:,:,2], dx=dx, axis=0), dx=dy, axis=0
-    )
-    abs_pairden_s_sum = np.trapz(
-        np.trapz(np.abs(parser_dmc.pairden_s[:,:,2]), dx=dx, axis=0), 
-        dx=dy, axis=0
-    )
-    
-    # Normalize spin density
-    if abs_pairden_s_sum > pairden_t_sum:
-        parser_dmc.pairden_s[:,:,2] *= pairden_t_sum / abs_pairden_s_sum
-                
-    # Calculate real space spin-spin correlation for pair density 
-    parser_dmc.ss_corr_pairden = \
-        parser_dmc._ss_corr(parser_dmc.pairden_t, parser_dmc.pairden_s)
+    try:
+        # Extrapolated estimator for pairden
+        parser_dmc.pairden_dd[:,:,2] = 2 * parser_dmc.pairden_dd[:,:,2] \
+                                       - parser_vmc.pairden_dd[:,:,2]
+        parser_dmc.pairden_dt[:,:,2] = 2 * parser_dmc.pairden_dt[:,:,2] \
+                                       - parser_vmc.pairden_dt[:,:,2]
+        parser_dmc.pairden_du[:,:,2] = 2 * parser_dmc.pairden_du[:,:,2] \
+                                       - parser_vmc.pairden_du[:,:,2]
+        parser_dmc.pairden_ud[:,:,2] = 2 * parser_dmc.pairden_ud[:,:,2] \
+                                       - parser_vmc.pairden_ud[:,:,2]
+        parser_dmc.pairden_ut[:,:,2] = 2 * parser_dmc.pairden_ut[:,:,2] \
+                                       - parser_vmc.pairden_ut[:,:,2]
+        parser_dmc.pairden_uu[:,:,2] = 2 * parser_dmc.pairden_uu[:,:,2] \
+                                       - parser_vmc.pairden_uu[:,:,2]
+        parser_dmc.pairden_t[:,:,2] = 2 * parser_dmc.pairden_t[:,:,2] \
+                                      - parser_vmc.pairden_t[:,:,2]                             
+        parser_dmc.pairden_s[:,:,2] = 2 * parser_dmc.pairden_s[:,:,2] \
+                                      - parser_vmc.pairden_s[:,:,2]
+             
+        # Integration variables (for normalization)
+        dx = parser_dmc.pairden_dd[1,0,0] - parser_dmc.pairden_dd[0,0,0]
+        dy = parser_dmc.pairden_dd[0,1,1] - parser_dmc.pairden_dd[0,0,1]    
+               
+        # Normalization of spin density:
+        # Integral of absolute value of spin density should be equal to 
+        # integral of total electron density if spins are perfectly polarized.
+        # While calculating extrapolated estimator for spin density,
+        # if VMC spin density is close to metallic phase and DMC spin density
+        # is close to antiferromagnetic phase, resulting extrapolated spin 
+        # density would be an antiferromagnetic phase however the normalization 
+        # of it would be corrupted (since 2*DMC - VMC). It should be corrected 
+        # using integral of total electron density.
+        pairden_t_sum = np.trapz(
+            np.trapz(parser_dmc.pairden_t[:,:,2], dx=dx, axis=0), dx=dy, axis=0
+        )
+        abs_pairden_s_sum = np.trapz(
+            np.trapz(np.abs(parser_dmc.pairden_s[:,:,2]), dx=dx, axis=0), 
+            dx=dy, axis=0
+        )
         
-    # Calculate edge polarization for pair density
-    parser_dmc.edge_pol_pairden = parser_dmc._edge_pol(parser_dmc.pairden_s)
+        # Normalize spin density
+        if abs_pairden_s_sum > pairden_t_sum:
+            parser_dmc.pairden_s[:,:,2] *= pairden_t_sum / abs_pairden_s_sum
+                    
+        # Calculate real space spin-spin correlation for pair density 
+        parser_dmc.ss_corr_pairden = \
+            parser_dmc._ss_corr(parser_dmc.pairden_t, parser_dmc.pairden_s)
+            
+        # Calculate edge polarization for pair density
+        parser_dmc.edge_pol_pairden = parser_dmc._edge_pol(parser_dmc.pairden_s)
 
+    except (TypeError, AttributeError) as err:
+        print('%s in pairden_ext.' %type(err).__name__)
+        parser_dmc.pairden_dd = np.nan
+        parser_dmc.pairden_dt = np.nan
+        parser_dmc.pairden_du = np.nan
+        parser_dmc.pairden_ud = np.nan
+        parser_dmc.pairden_ut = np.nan
+        parser_dmc.pairden_uu = np.nan
+        parser_dmc.pairden_t = np.nan
+        parser_dmc.pairden_s = np.nan
+        parser_dmc.ss_corr_pairden = np.nan
+        parser_dmc.edge_pol_pairden = np.nan
+        
     return parser_dmc
 
 

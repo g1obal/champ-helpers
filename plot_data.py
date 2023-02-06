@@ -3,7 +3,7 @@ Plot data
 
 Author: Gokhan Oztarhan
 Created date: 12/10/2021
-Last modified: 20/11/2022
+Last modified: 06/02/2023
 """
 
 import os
@@ -31,7 +31,7 @@ PLOT_DIR = 'data_plots'
 
 PLOT_V0 = False
 PLOT_SS_CORR = True
-PLOT_EDGE_POL = True
+PLOT_EDGE_POL = False
 
 DPI = 200
 PLOT_FORMAT = 'png'
@@ -343,12 +343,15 @@ def plot(
         
         x = get_feature(df, xfeature, xtype)
         y = get_feature(df, yfeature, ytype)
-            
+        
         if errfeature is not None:
             yerr = df[errfeature]
+            # If all elements of yerr are NaN, an error is raised.
+            if np.isnan(yerr).all():
+                yerr = None
         else:
             yerr = None
-            
+        
         if not connect_group_points:
             linestyle[1] = 'none'
         

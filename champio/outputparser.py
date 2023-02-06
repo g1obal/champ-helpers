@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 25/11/2022
+Last modified: 06/02/2023
 """
 
 import os
@@ -161,12 +161,14 @@ class OutputParser():
         try:
             with open(os.path.join(self.path, self.fname), 'r') as f:
                 self.data = f.readlines()
+                if self._data_corrupted():
+                    self.data = None
+                    print('[OutputParser] File corrupted: %s' \
+                        %os.path.join(self.path, self.fname))
         except OSError:
             self.data = None
-            print(
-                '[OutputParser] File read error: %s' \
-                %os.path.join(self.path, self.fname)
-            )
+            print('[OutputParser] File read error: %s' \
+                %os.path.join(self.path, self.fname))
         
         if self.data is not None:
             self._input_info()
@@ -193,6 +195,18 @@ class OutputParser():
                 self.edge_pol_pairden = self._edge_pol(self.pairden_s)
                 
             self._cpu_time()
+            
+    def _data_corrupted(self):
+        corrupted = False
+        # Check the run start indicator line.
+        string = '*********** START VMC CALCULATION  ***********'
+        ind, line = get_lines(string, self.data, first_occurance=True)
+        if ind is None:
+            string = '*********** START DMC CALCULATION  ***********'
+            ind, line = get_lines(string, self.data, first_occurance=True)
+            if ind is None:
+                corrupted = True
+        return corrupted
         
     def _input_info(self):
         _feature = self._feature
