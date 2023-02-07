@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 06/02/2023
+Last modified: 07/02/2023
 """
 
 import os
@@ -630,9 +630,9 @@ class OutputParser():
         
     def _split_data(self):
         string = '*********** START DMC CALCULATION  ***********'
-        dmc_index = get_lines(string, self.data)[0][0]
-        self.data_vmc = self.data[:dmc_index]
-        self.data_dmc = self.data[dmc_index:]        
+        ind, line = get_lines(string, self.data, first_occurance=True)
+        self.data_vmc = self.data[:ind]
+        self.data_dmc = self.data[ind:]
         
     def _cpu_time(self):
         _feature = self._feature

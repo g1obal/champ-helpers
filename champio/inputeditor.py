@@ -6,7 +6,7 @@ Updates optimized parameters using output file.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 29/01/2023
+Last modified: 07/02/2023
 """
 
 import os
@@ -314,7 +314,7 @@ class InputEditor():
         else:
             print('[InputEditor] update_jastrow: new_params = None')
             
-    def generate_mc_configs(self, root, files):
+    def generate_mc_configs(self, root, files, n_mc_configs, pick_random):
         mc_configs = []
         i = 0
         for f in files:
@@ -330,15 +330,26 @@ class InputEditor():
                     mc_configs += f_temp.readlines()
                     i += 1
         
-        print('[InputEditor] generate_mc_configs: ' \
-            + 'mc_configs files found = %i' %i)
+        print(
+            '[InputEditor] generate_mc_configs: ' \
+            + 'mc_configs files found = %i\n' %i \
+            + '[InputEditor] generate_mc_configs: ' \
+            + 'total # of lines found = %i' %len(mc_configs)
+        )
         
         if mc_configs:
-            mc_configs_shuffle = []
-            iskip = len(mc_configs) // i
-            for j in range(iskip):
-                mc_configs_shuffle += mc_configs[j::iskip]
+            if pick_random:
+                ind = np.random.permutation(np.arange(len(mc_configs)))
+                mc_configs_shuffle = [mc_configs[j] for j in ind]
+            else:
+                mc_configs_shuffle = []
+                iskip = len(mc_configs) // i
+                for j in range(iskip):
+                    mc_configs_shuffle += mc_configs[j::iskip]
 
+            if n_mc_configs <= len(mc_configs_shuffle):
+                mc_configs_shuffle = mc_configs_shuffle[:n_mc_configs]
+                
             with open(os.path.join(root, 'mc_configs'), 'w') as f:
                 f.writelines(mc_configs_shuffle)
             

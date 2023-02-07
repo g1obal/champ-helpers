@@ -5,7 +5,7 @@ Edits currently present inputs using InputEditor.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 29/01/2023
+Last modified: 07/02/2023
 """
 
 import os
@@ -36,6 +36,8 @@ UPDATE_GAUSS_WIDTH = True
 UPDATE_JASTROW = True
 
 GENERATE_MC_CONFIGS = False
+MC_CONFIGS_PICK_RANDOM = False
+N_MC_CONFIGS = 120
 
 ROOT_DIR = '.'
 INPUT_FILE_NAME = 'input_file'
@@ -90,7 +92,9 @@ def edit_input():
                 editor.update_jastrow(parser.opt_jastrow())
             
             if GENERATE_MC_CONFIGS:
-                editor.generate_mc_configs(root, files)
+                editor.generate_mc_configs(
+                    root, files, N_MC_CONFIGS, MC_CONFIGS_PICK_RANDOM
+                )
                 
             editor.commit(NEW_INPUT_FILE_NAME)
             
