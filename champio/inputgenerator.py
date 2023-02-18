@@ -3,7 +3,7 @@ Input Generator class
 
 Author: Gokhan Oztarhan
 Created date: 18/06/2019
-Last modified: 14/01/2023
+Last modified: 18/02/2023
 """
 
 from os import urandom
@@ -12,7 +12,7 @@ import logging
 
 import numpy as np
 
-from .au import convert_energy, convert_length
+from .auconverter import AUConverter
 from .latgen import Lattice
 from .inputwriter import inputwriter
 from .inputplotter import inputplotter
@@ -184,23 +184,20 @@ class InputGenerator():
         self.set_title()
         
     def set_units(self):
-        m_r = self.m_r
-        kappa = self.kappa
         eunit = self.eunit
         lunit = self.lunit
+        auconverter = AUConverter(self.m_r, self.kappa)
                  
-        self.gndot_v0_au = convert_energy(self.gndot_v0, eunit, m_r, kappa)
-        self.gndot_rho_au = convert_length(self.gndot_rho, lunit, m_r, kappa)
+        self.gndot_v0_au = auconverter.energy_to_au(self.gndot_v0, eunit)
+        self.gndot_rho_au = auconverter.length_to_au(self.gndot_rho, lunit)
         
-        one_unit_e = convert_energy(1.0, eunit, m_r, kappa)
-        one_unit_l = convert_length(1.0, lunit, m_r, kappa)
+        one_unit_e = auconverter.energy_to_au(1.0, eunit)
+        one_unit_l = auconverter.length_to_au(1.0, lunit)
         self.gndot_k_au = self.gndot_k * one_unit_e / one_unit_l**2
         
-        self.gauss_sigma_au = convert_length(
-            self.gauss_sigma, lunit, m_r, kappa
-        )
+        self.gauss_sigma_au = auconverter.length_to_au(self.gauss_sigma, lunit)
                                              
-        self.a_au = convert_length(self.a, lunit, m_r, kappa)
+        self.a_au = auconverter.length_to_au(self.a, lunit)
         
     def set_delta(self):
         # Calculate polynomial fitted delta for around 0.5 acceptance

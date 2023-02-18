@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 07/02/2023
+Last modified: 18/02/2023
 """
 
 import os
@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 
-from .au import convert_energy_inverse, convert_length_inverse
+from .auconverter import AUConverter
 from .densityparser import parse_den, parse_pairden
 
 
@@ -651,8 +651,7 @@ class OutputParser():
             self.tot_cpu_time = None
     
     def to_SI(self, eunit='meV', lunit='nm'):
-        m_r = self.m_r
-        kappa = self.kappa
+        auconverter = AUConverter(self.m_r, self.kappa)
         
         length = [
             'delta', 'a', 'gndot_rho', 'gauss_sigma', 'gauss_sigma_last'
@@ -670,25 +669,23 @@ class OutputParser():
              
         for feature in length:
             try:
-                self.__dict__[feature] = convert_length_inverse(
-                    self.__dict__[feature], lunit, m_r, kappa
-                )
+                self.__dict__[feature] = auconverter.length_to_SI(
+                    self.__dict__[feature], lunit)
             except err:
                 self.__dict__[feature] = np.nan
 
         for feature in energy:
             try:
-                self.__dict__[feature] = convert_energy_inverse(
-                    self.__dict__[feature], eunit, m_r, kappa
-                )                    
+                self.__dict__[feature] = auconverter.energy_to_SI(
+                    self.__dict__[feature], eunit)
             except err:
                 self.__dict__[feature] = np.nan
                 
         # Convert gndot_k from 1/au to [ENERGY]/[LENGTH]^2
         try:
-            one_unit_inv_e = convert_energy_inverse(1.0, eunit, m_r, kappa)    
-            one_unit_inv_l = convert_length_inverse(1.0, lunit, m_r, kappa) 
-            self.gndot_k *= one_unit_inv_e / one_unit_inv_l**2    
+            one_unit_SI_e = auconverter.energy_to_SI(1.0, eunit)    
+            one_unit_SI_l = auconverter.length_to_SI(1.0, lunit) 
+            self.gndot_k *= one_unit_SI_e / one_unit_SI_l**2    
         except err:
             self.gndot_k = np.nan        
                 

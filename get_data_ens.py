@@ -5,7 +5,7 @@ Calculate the ensemble averages of extrapolated data.
 
 Author: Gokhan Oztarhan
 Created date: 02/08/2022
-Last modified: 23/11/2022
+Last modified: 18/02/2023
 """
 
 import sys
@@ -17,7 +17,7 @@ import pickle
 import numpy as np
 import pandas as pd
 
-from champio.au import convert_energy
+from champio.auconverter import AUConverter
 from champio.outputparser import OutputParser
 
 
@@ -143,9 +143,8 @@ def get_data_ens():
                 
                 # Boltzmann constant
                 kb_SI = 1.380649e-23 # in J K^-1
-                kb = convert_energy(
-                    kb_SI, 'J', parser_mean.m_r, parser_mean.kappa
-                )
+                kb = AUConverter(parser_mean.m_r, parser_mean.kappa).\
+                    energy_to_au(kb_SI, 'J')
                 beta = 1 / (kb * temp)
                 
                 shift = calculate_exponent_shift(beta, parser_list)
