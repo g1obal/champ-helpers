@@ -35,9 +35,6 @@ Created date: 17/09/2020
 Last modified: 18/02/2023
 """
 
-import numpy as np
-
-
 LUNITS = {
     'm': 1,
     'cm': 1e-2,
