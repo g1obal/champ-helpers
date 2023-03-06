@@ -5,7 +5,7 @@ Calculate the ensemble averages of extrapolated data.
 
 Author: Gokhan Oztarhan
 Created date: 02/08/2022
-Last modified: 18/02/2023
+Last modified: 06/03/2023
 """
 
 import sys
@@ -54,6 +54,7 @@ FEATURES = [
     ['pb_kin_E', 'pb_kin_E_err'],
     ['acceptance_1st', None],
     ['acceptance', None],
+    ['delta', None],
     ['Tcorr_1st', None],
     ['Tcorr', None],
     ['overlap_dmc', None],

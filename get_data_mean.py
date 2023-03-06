@@ -5,7 +5,7 @@ Calculate the mean of mpi2 runs with different random seeds.
 
 Author: Gokhan Oztarhan
 Created date: 04/07/2022
-Last modified: 23/11/2022
+Last modified: 06/03/2023
 """
 
 import sys
@@ -23,7 +23,8 @@ from champio.outputparser import OutputParser
 ROOT_DIR = '.'
 OUTPUT_FILE_NAME = 'output_file'
 
-DATA_MEAN_FILE_NAME = 'runs_mean.pkl'
+DATA_MEAN_DIR = 'mean'
+DATA_MEAN_FILE_NAME = 'mean_file.pkl'
 
 # Manually set m_r, kappa and a (overwrites run title info)
 M_R = None
@@ -94,13 +95,14 @@ for root, dirs, files in sorted(os.walk(ROOT_DIR)):
         else:
             PATH[run_dir] = [root]
 
+# Create mean directory
+if not os.path.exists(DATA_MEAN_DIR):
+    os.mkdir(DATA_MEAN_DIR)
+
 
 def get_data_mean():
     tic = time.time()
-    
-    # Open pickle file
-    pkl_file = open(DATA_MEAN_FILE_NAME, 'wb')
-    
+
     # Form an empty dataframe using parser features
     parser = OutputParser()
     
@@ -139,11 +141,22 @@ def get_data_mean():
             parser_mean = set_ss_corrs(parser_mean)
             parser_mean = get_time_mean(parser_list, parser_mean)
             
+            # Set fname and path of parser_mean
+            parser_mean.fname = DATA_MEAN_FILE_NAME
+            parser_mean.path = os.path.join(DATA_MEAN_DIR, parser_mean.run_dir)
+            
+            # Create run_dir for mean file
+            if not os.path.exists(parser_mean.path):
+                os.mkdir(parser_mean.path)
+            
             # Save all variables as dictionary to a pickle file
+            pkl_file = open(
+                os.path.join(parser_mean.path, parser_mean.fname), 'wb'
+            )
             pickle.dump(
                 parser_mean.__dict__, pkl_file, pickle.HIGHEST_PROTOCOL
             )
-            pkl_file.flush()
+            pkl_file.close()
             
             # Append to dataframe
             df_temp = parser_mean.dataframe()
@@ -177,9 +190,6 @@ def get_data_mean():
     df_SI.to_csv('data_SI.csv', header=True, float_format='% .6f')
     df_all.to_csv('data_all_au.csv', header=True, float_format='% .6f')
     df_all_SI.to_csv('data_all_SI.csv', header=True, float_format='% .6f')
-    
-    # Close pickle file
-    pkl_file.close()
     
     toc = time.time() 
     print("Execution time, get_data_mean = %.3f s" %(toc-tic))

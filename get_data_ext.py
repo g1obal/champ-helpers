@@ -3,7 +3,7 @@ CHAMP Data Reader and Extrapolated Estimator Calculator
 
 Author: Gokhan Oztarhan
 Created date: 24/06/2022
-Last modified: 06/02/2023
+Last modified: 06/03/2023
 """
 
 import sys
@@ -17,13 +17,12 @@ import pandas as pd
 
 from champio.outputparser import OutputParser
 
-
-MPI2_MEAN = False
-DATA_MEAN_FILE_NAME = 'runs_mean.pkl'
-
 VMC_ROOT_DIR = '../vmc/den'
 DMC_ROOT_DIR = '../dmc/mpi2'
 OUTPUT_FILE_NAME = 'output_file'
+
+MPI2_MEAN = False
+DATA_MEAN_FILE_NAME = 'mean_file.pkl'
 
 EXTRAPOLATED_FILE_NAME = 'runs_ext.pkl'
 
@@ -36,40 +35,25 @@ A = None
 EUNIT = 'meV' # meV, eV, J
 LUNIT = 'nm' # A, nm, m
 
+# PATHS
+PATH_VMC = {}
+PATH_DMC = {}
+
 # VMC Directories 
-PATH = {}
 for root, dirs, files in os.walk(VMC_ROOT_DIR):
     if OUTPUT_FILE_NAME in files:
         run_dir = os.path.split(root)[-1]
-        if run_dir in PATH:
-            PATH[run_dir]['VMC'] = root
-        else:
-            PATH[run_dir] = {'VMC': root}     
+        PATH_VMC[run_dir] = root
 
 # DMC Directories 
-if not MPI2_MEAN:           
-    for root, dirs, files in os.walk(DMC_ROOT_DIR):
-        if OUTPUT_FILE_NAME in files:
-            run_dir = os.path.split(root)[-1]
-            if run_dir in PATH:
-                PATH[run_dir]['DMC'] = root
-            else:
-                PATH[run_dir] = {'DMC': root}  
-
-    # Delete run directories if there is no matching run directory
-    for run_dir in list(PATH):
-        if len(PATH[run_dir]) < 2:
-            del PATH[run_dir]
+if MPI2_MEAN:
+    search_fname = DATA_MEAN_FILE_NAME
 else:
-    f = open(os.path.join(DMC_ROOT_DIR, DATA_MEAN_FILE_NAME), 'rb')
-    NDATA_MEAN = 0
-    while True:
-        try:
-            data = pickle.load(f)
-            NDATA_MEAN += 1
-        except EOFError:
-            break
-    f.close()
+    search_fname = OUTPUT_FILE_NAME
+for root, dirs, files in os.walk(DMC_ROOT_DIR):
+    if search_fname in files:
+        run_dir = os.path.split(root)[-1]
+        PATH_DMC[run_dir] = root
 
 
 def get_data_ext():
@@ -82,24 +66,11 @@ def get_data_ext():
     parser = OutputParser()
     df = pd.DataFrame(columns=parser.features)
     df_SI = pd.DataFrame(columns=parser.features)
-
-    # Initialize the iterator for parsers
-    if MPI2_MEAN:
-        pkl_file_mean = open(
-            os.path.join(DMC_ROOT_DIR, DATA_MEAN_FILE_NAME), 'rb'
-        )
-        iterator = iter(
-            get_parser_vmc_dmc_mean(pickle.load(pkl_file_mean)) \
-            for i in range(NDATA_MEAN)
-        )
-    else:    
-        iterator = iter(get_parser_vmc_dmc(run_dir) for run_dir in PATH)
     
-    parser_vmc = deepcopy(parser)
-    parser_dmc = deepcopy(parser)
-    while True:
+    for run_dir in PATH_DMC:
         try:
-            parser_vmc, parser_dmc = next(iterator)
+            parser_vmc = get_parser_vmc(run_dir)
+            parser_dmc = get_parser_dmc(run_dir)
             
             # Path info
             print('vmc path: %s\n' %parser_vmc.path \
@@ -131,8 +102,6 @@ def get_data_ext():
             print('Done.\n')
         except OSError as err:
             print('%s in files.\n' %type(err).__name__)
-        except StopIteration:
-            break
             
     # Save dataframes to csv
     df.to_csv('data_au.csv', header=True, float_format='% .6f')
@@ -140,69 +109,62 @@ def get_data_ext():
     
     # Close pickle file
     pkl_file.close()
-    if MPI2_MEAN:
-        pkl_file_mean.close()
     
     toc = time.time() 
     print("Execution time, get_data_ext = %.3f s" %(toc-tic))
 
 
-def get_parser_vmc_dmc(run_dir):
-    # Parse VMC output file
+def get_parser_vmc(run_dir):
     parser_vmc = OutputParser(
-        OUTPUT_FILE_NAME, 
-        path=PATH[run_dir]['VMC'], 
+        OUTPUT_FILE_NAME,
+        path=PATH_VMC[run_dir],
         m_r=M_R,
         kappa=KAPPA,
         a=A,
         calculate_ss_corr=False,
         calculate_edge_pol=False,
-    )  
-    parser_vmc.parse()  
-
-    # Parse DMC output file
-    parser_dmc = OutputParser(
-        OUTPUT_FILE_NAME, 
-        path=PATH[run_dir]['DMC'],
-        m_r=M_R,
-        kappa=KAPPA,
-        a=A,
-        calculate_ss_corr=False,
-        calculate_edge_pol=False,
-    )  
-    parser_dmc.parse()  
+    )
+    parser_vmc.parse()
     
-    return parser_vmc, parser_dmc
+    return parser_vmc
 
 
-def get_parser_vmc_dmc_mean(data):
-    run_dir = data['run_dir']
+def get_parser_dmc(run_dir):
+    if MPI2_MEAN:
+        pkl_mean_fname = os.path.join(PATH_DMC[run_dir], DATA_MEAN_FILE_NAME)
+        with open(pkl_mean_fname, 'rb') as pkl_mean_file:
+            data = pickle.load(pkl_mean_file)
+        
+        # Initialize DMC parser using empty parser
+        # Update it with the loaded dictionary
+        parser_dmc = OutputParser()
+        parser_dmc.__dict__.update(data)
+        
+        if parser_dmc.path not in PATH_DMC[run_dir]:
+            print('Warning: parser_dmc.path not in PATH_DMC[run_dir]')
+            print('parser_dmc.path (read from pkl file) = %s' %parser_dmc.path)
+        
+        parser_dmc.path = PATH_DMC[run_dir]
+        
+        if M_R is not None:
+            parser_dmc.m_r = M_R
+        if KAPPA is not None:
+            parser_dmc.kappa = KAPPA
+        if A is not None:
+            parser_dmc.a = A        
+    else:
+        parser_dmc = OutputParser(
+            OUTPUT_FILE_NAME,
+            path=PATH_DMC[run_dir],
+            m_r=M_R,
+            kappa=KAPPA,
+            a=A,
+            calculate_ss_corr=False,
+            calculate_edge_pol=False,
+        )  
+        parser_dmc.parse()
 
-    # Parse VMC output file
-    parser_vmc = OutputParser(
-        OUTPUT_FILE_NAME, 
-        path=PATH[run_dir]['VMC'], 
-        m_r=M_R,
-        kappa=KAPPA,
-        a=A,
-        calculate_ss_corr=False,
-        calculate_edge_pol=False,
-    )  
-    parser_vmc.parse()  
-    
-    # Initialize DMC parser using VMC parser
-    # Update it with the loaded dictionary
-    parser_dmc = deepcopy(parser_vmc)
-    parser_dmc.__dict__.update(data)
-    
-    if M_R is not None:
-        parser_dmc.m_r = M_R
-    if KAPPA is not None:
-        parser_dmc.kappa = KAPPA
-    if A is not None:
-        parser_dmc.a = A
-    
-    return parser_vmc, parser_dmc
+    return parser_dmc
 
 
 def den2d_ext(parser_vmc, parser_dmc):
