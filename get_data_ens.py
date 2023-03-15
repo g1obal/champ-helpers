@@ -5,7 +5,7 @@ Calculate the ensemble averages of extrapolated data.
 
 Author: Gokhan Oztarhan
 Created date: 02/08/2022
-Last modified: 06/03/2023
+Last modified: 15/03/2023
 """
 
 import sys
@@ -24,8 +24,11 @@ from champio.outputparser import OutputParser
 ROOT_DIR = '.'
 OUTPUT_FILE_NAME = 'output_file'
 
-DATA_EXT_FILE_NAME = '../ext/runs_ext.pkl'
-DATA_ENSEMBLE_FILE_NAME = 'runs_ensemble.pkl'
+DATA_EXT_DIR = '../ext'
+DATA_EXT_FILE_NAME = 'ext_file.pkl'
+
+DATA_ENS_DIR = 'runs_ens'
+DATA_ENS_FILE_NAME = 'ens_file.pkl'
 
 # Temperatures (K)
 TEMP = [4]
@@ -84,38 +87,37 @@ FEATURES = [
     ['pairden_s', None],
 ]
 
+# Load pickle files
+groups = {}
+for root, dirs, files in sorted(os.walk(DATA_EXT_DIR)):
+    if DATA_EXT_FILE_NAME in files:
+        with open(os.path.join(root, DATA_EXT_FILE_NAME), 'rb') as pkl_file_ext:
+            data = pickle.load(pkl_file_ext)
+        
+        parser = OutputParser()
+        parser.__dict__.update(data)
+        
+        if M_R is not None:
+            parser.m_r = M_R
+        if KAPPA is not None:
+            parser.kappa = KAPPA
+        if A is not None:
+            parser.a = A
+        
+        # Get group names of matching runs
+        group_name = parser.run_dir.split('_')[0]
+        if group_name in groups:
+            groups[group_name].append(deepcopy(parser))
+        else:
+            groups[group_name] = [deepcopy(parser)]
+
+# Create ensemble directory
+if not os.path.exists(DATA_ENS_DIR):
+    os.mkdir(DATA_ENS_DIR)
+
 
 def get_data_ens():
     tic = time.time()
-    
-    # Load pickle file
-    with open(DATA_EXT_FILE_NAME, 'rb') as pkl_file:
-        groups = {}
-        while True:
-            try:
-                data = pickle.load(pkl_file)
-                parser = OutputParser()
-                parser.__dict__.update(data)
-                
-                if M_R is not None:
-                    parser_dmc.m_r = M_R
-                if KAPPA is not None:
-                    parser_dmc.kappa = KAPPA
-                if A is not None:
-                    parser_dmc.a = A
-                
-                # Get indices of matching runs
-                group_name = parser.__dict__['run_dir'].split('_')[0]
-                if group_name in groups:
-                    groups[group_name].append(deepcopy(parser))
-                else:
-                    groups[group_name] = [deepcopy(parser)]
-                    
-            except EOFError:
-                break
-
-    # Open pickle file
-    pkl_file = open(DATA_ENSEMBLE_FILE_NAME, 'wb')
     
     # Form an empty dataframe using parser features
     parser = OutputParser()
@@ -160,20 +162,29 @@ def get_data_ens():
                     beta, shift, parser_list, parser_mean
                 )
                 
-                # Set variables for parser_mean
-                parser_mean.__dict__['parent_path'] = None
-                parser_mean.__dict__['run_dir'] = \
+                # Set variables of parser_mean
+                parser_mean.fname = DATA_ENS_FILE_NAME
+                parser_mean.parent_path = DATA_ENS_DIR
+                parser_mean.run_dir = \
                     '_'.join(
-                        parser_mean.__dict__['run_dir'].split('_')[:4] \
-                        + [str(temp) + 'K']
+                        parser_mean.run_dir.split('_')[:-1] + [str(temp) + 'K']
                     )
-                parser_mean.__dict__['info'] = 'T = %s K' %temp
+                parser_mean.path = \
+                    os.path.join(parser_mean.parent_path, parser_mean.run_dir)
+                parser_mean.info = 'T = %s K' %temp
+                
+                # Create run_dir for ensemble file
+                if not os.path.exists(parser_mean.path):
+                    os.mkdir(parser_mean.path)
                 
                 # Save all variables as dictionary to a pickle file
+                pkl_file = open(
+                    os.path.join(parser_mean.path, parser_mean.fname), 'wb'
+                )
                 pickle.dump(
                     parser_mean.__dict__, pkl_file, pickle.HIGHEST_PROTOCOL
                 )
-                pkl_file.flush()
+                pkl_file.close()
                 
                 # Append to dataframe
                 df_temp = parser_mean.dataframe()
@@ -211,9 +222,6 @@ def get_data_ens():
     df_SI.to_csv('data_SI.csv', header=True, float_format='% .6f')
     df_all.to_csv('data_all_au.csv', header=True, float_format='% .6f')
     df_all_SI.to_csv('data_all_SI.csv', header=True, float_format='% .6f')
-    
-    # Close pickle file
-    pkl_file.close()
     
     toc = time.time() 
     print("Execution time, get_data_ens = %.3f s" %(toc-tic))

@@ -5,7 +5,7 @@ Calculate the mean of mpi2 runs with different random seeds.
 
 Author: Gokhan Oztarhan
 Created date: 04/07/2022
-Last modified: 06/03/2023
+Last modified: 15/03/2023
 """
 
 import sys
@@ -23,7 +23,7 @@ from champio.outputparser import OutputParser
 ROOT_DIR = '.'
 OUTPUT_FILE_NAME = 'output_file'
 
-DATA_MEAN_DIR = 'mean'
+DATA_MEAN_DIR = 'runs_mean'
 DATA_MEAN_FILE_NAME = 'mean_file.pkl'
 
 # Manually set m_r, kappa and a (overwrites run title info)
@@ -141,9 +141,11 @@ def get_data_mean():
             parser_mean = set_ss_corrs(parser_mean)
             parser_mean = get_time_mean(parser_list, parser_mean)
             
-            # Set fname and path of parser_mean
+            # Set variables of parser_mean
             parser_mean.fname = DATA_MEAN_FILE_NAME
-            parser_mean.path = os.path.join(DATA_MEAN_DIR, parser_mean.run_dir)
+            parser_mean.parent_path = DATA_MEAN_DIR
+            parser_mean.path = \
+                os.path.join(parser_mean.parent_path, parser_mean.run_dir)
             
             # Create run_dir for mean file
             if not os.path.exists(parser_mean.path):

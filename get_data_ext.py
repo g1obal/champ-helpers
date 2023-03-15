@@ -3,7 +3,7 @@ CHAMP Data Reader and Extrapolated Estimator Calculator
 
 Author: Gokhan Oztarhan
 Created date: 24/06/2022
-Last modified: 06/03/2023
+Last modified: 15/03/2023
 """
 
 import sys
@@ -17,6 +17,7 @@ import pandas as pd
 
 from champio.outputparser import OutputParser
 
+
 VMC_ROOT_DIR = '../vmc/den'
 DMC_ROOT_DIR = '../dmc/mpi2'
 OUTPUT_FILE_NAME = 'output_file'
@@ -24,7 +25,8 @@ OUTPUT_FILE_NAME = 'output_file'
 MPI2_MEAN = False
 DATA_MEAN_FILE_NAME = 'mean_file.pkl'
 
-EXTRAPOLATED_FILE_NAME = 'runs_ext.pkl'
+DATA_EXT_DIR = 'runs_ext'
+DATA_EXT_FILE_NAME = 'ext_file.pkl'
 
 # Manually set m_r, kappa and a (overwrites run title info)
 M_R = None
@@ -55,12 +57,13 @@ for root, dirs, files in os.walk(DMC_ROOT_DIR):
         run_dir = os.path.split(root)[-1]
         PATH_DMC[run_dir] = root
 
+# Create extrapolated directory
+if not os.path.exists(DATA_EXT_DIR):
+    os.mkdir(DATA_EXT_DIR)
+
 
 def get_data_ext():
     tic = time.time()
-    
-    # Open pickle file
-    pkl_file = open(EXTRAPOLATED_FILE_NAME, 'wb')
     
     # Form an empty dataframe using parser features
     parser = OutputParser()
@@ -82,9 +85,22 @@ def get_data_ext():
             # Calculate pairden related extrapolated estimators
             parser_dmc = pairden_ext(parser_vmc, parser_dmc)
             
+            # Set variables of parser_dmc
+            parser_dmc.fname = DATA_EXT_FILE_NAME
+            parser_dmc.parent_path = DATA_EXT_DIR
+            parser_dmc.path = \
+                os.path.join(parser_dmc.parent_path, parser_dmc.run_dir)
+            
+            # Create run_dir for extrapolated file
+            if not os.path.exists(parser_dmc.path):
+                os.mkdir(parser_dmc.path)
+                
             # Save all variables as dictionary to a pickle file
+            pkl_file = open(
+                os.path.join(parser_dmc.path, parser_dmc.fname), 'wb'
+            )
             pickle.dump(parser_dmc.__dict__, pkl_file, pickle.HIGHEST_PROTOCOL)
-            pkl_file.flush()
+            pkl_file.close()
             
             # Append to dataframe
             df = pd.concat(
@@ -106,9 +122,6 @@ def get_data_ext():
     # Save dataframes to csv
     df.to_csv('data_au.csv', header=True, float_format='% .6f')
     df_SI.to_csv('data_SI.csv', header=True, float_format='% .6f')
-    
-    # Close pickle file
-    pkl_file.close()
     
     toc = time.time() 
     print("Execution time, get_data_ext = %.3f s" %(toc-tic))

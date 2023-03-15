@@ -3,7 +3,7 @@ Plot Density
 
 Author: Gokhan Oztarhan
 Created date: 18/01/2022
-Last modified: 20/11/2022
+Last modified: 15/03/2023
 """
 
 import os
@@ -23,7 +23,7 @@ from champio.outputparser import OutputParser
 
 N_CPU = 4
 
-# None: read from args, 0: normal, 1: extrapolated, 2: mean, 3: ensemble
+# None: read from args, 0: normal, 1: mean, 2: extrapolated, 3: ensemble
 RUN_TYPE = None 
 
 DEN2D = True
@@ -53,15 +53,14 @@ LABELSIZE_TICK_PARAMS_PAIRDEN_ALL = 6
 FONTSIZE_TITLE_PAIRDEN_ALL = 10
 FONTSIZE_INFO_PAIRDEN_ALL = 10
 
-OUTPUT_FILE_NAME = 'output_file'
-
 ROOT_DIR = '.'
 PLOT_DIR = 'density_plots'
 PAIRDEN_ALL_DIR = os.path.join(PLOT_DIR, 'pairden_all')
 
-EXTRAPOLATED_FILE_NAME = 'runs_ext.pkl'
-DATA_MEAN_FILE_NAME = 'runs_mean.pkl'
-DATA_ENSEMBLE_FILE_NAME = 'runs_ensemble.pkl'
+OUTPUT_FILE_NAME = 'output_file'
+DATA_MEAN_FILE_NAME = 'mean_file.pkl'
+DATA_EXT_FILE_NAME = 'ext_file.pkl'
+DATA_ENS_FILE_NAME = 'ens_file.pkl'
 PKL_FILE_NAME = None
 PKL_INFO = None
 
@@ -82,10 +81,14 @@ def plot_density():
 
     if not os.path.exists(PAIRDEN_ALL_DIR):
         os.mkdir(PAIRDEN_ALL_DIR)
-         
+    
+    if RUN_TYPE == 0:
+        search_fname = OUTPUT_FILE_NAME
+    else:
+        search_fname = PKL_FILE_NAME
     paths = [
-        root for root, dirs, files in os.walk(ROOT_DIR) \
-        if not dirs and OUTPUT_FILE_NAME in files
+        root for root, dirs, files in sorted(os.walk(ROOT_DIR)) \
+        if not dirs and search_fname in files
     ]
     paths.sort()
     chunks = get_chunks(len(paths), N_CPU)
@@ -105,17 +108,24 @@ def plot_density():
 def parse_and_plot(paths):    
     for root in paths:
         try:
-            # Parse output file for required variables
-            outparser = OutputParser(
-                OUTPUT_FILE_NAME, path=root,
-                parse_density=True, 
-                calculate_ss_corr=False,
-                calculate_edge_pol=False,
-            )  
-            outparser.parse()
+            if RUN_TYPE == 0:
+                # Parse output file for required variables
+                outparser = OutputParser(
+                    OUTPUT_FILE_NAME, path=root,
+                    parse_density=True, 
+                    calculate_ss_corr=False,
+                    calculate_edge_pol=False,
+                )
+                outparser.parse()
+            else:
+                # Load data
+                with open(os.path.join(root, PKL_FILE_NAME), 'rb') as pkl_file:
+                    pkl_data = pickle.load(pkl_file)
+                outparser = OutputParser()
+                outparser.__dict__.update(pkl_data)
+                outparser.run_mode = PKL_INFO
         except Exception as err:
-            print('%s, OutputParser, %s: %s' %(type(err).__name__, \
-                outparser.run_mode, os.path.split(root)[-1]))
+            print('%s, parse/load data: %s' %(type(err).__name__, root))
         
         if DEN2D:
             try:
@@ -130,14 +140,14 @@ def parse_and_plot(paths):
                     outparser.den2d_nelec_calc,
                     root,
                     outparser.run_mode
-                )  
+                )
+                
                 # Print info
                 print('Done den2d, %s: %s' \
                     %(outparser.run_mode, os.path.split(root)[-1]))
             except Exception as err:
-                print('%s, den2d, %s: %s' %(type(err).__name__, \
-                    outparser.run_mode, os.path.split(root)[-1]))
-                    
+                print('%s, den2d: %s' %(type(err).__name__, root))
+        
         if PAIRDEN:                   
             try:
                 # Raise error if density parser fails
@@ -151,14 +161,13 @@ def parse_and_plot(paths):
                     outparser.pairden_xfix,
                     root,
                     outparser.run_mode
-                )            
+                )
             
                 # Print info
                 print('Done pairden, %s: %s' \
                     %(outparser.run_mode, os.path.split(root)[-1]))
             except Exception as err:
-                print('%s, pairden, %s: %s' %(type(err).__name__, \
-                    outparser.run_mode, os.path.split(root)[-1]))
+                print('%s, pairden: %s' %(type(err).__name__, root))
         
         if PAIRDEN_ALL:                   
             try:
@@ -177,117 +186,13 @@ def parse_and_plot(paths):
                     outparser.pairden_xfix,
                     root,
                     outparser.run_mode
-                )            
+                )
             
                 # Print info
                 print('Done pairden_all, %s: %s' \
                     %(outparser.run_mode, os.path.split(root)[-1]))
             except Exception as err:
-                print('%s, pairden_all, %s: %s' %(type(err).__name__, \
-                    outparser.run_mode, os.path.split(root)[-1]))
-       
-             
-def plot_density_from_pkl():
-    tic = time.time()
-    
-    if not os.path.exists(PLOT_DIR):
-        os.mkdir(PLOT_DIR)
-        
-    if not os.path.exists(PAIRDEN_ALL_DIR):
-        os.mkdir(PAIRDEN_ALL_DIR)
-    
-    f = open(PKL_FILE_NAME, 'rb')
-    len_data = 0
-    while True:
-        try:
-            data = pickle.load(f)
-            len_data += 1
-        except EOFError:
-            break
-    f.close()
-    
-    chunks = get_chunks(len_data, N_CPU)
-
-    # Divide chunks to processes one by one (chunksize=1)
-    # since I already calculated and distributed chunks 
-    # to processes (in order to preserve list order).
-    myPool = Pool()
-    result = myPool.starmap(
-        load_and_plot, chunks, chunksize=1
-    )
-    
-    toc = time.time() 
-    print("Execution time, plot_density_from_pkl = %.3f s" %(toc-tic))
-    
-                    
-def load_and_plot(skip, to):  
-    f = open(PKL_FILE_NAME, 'rb')
-    
-    for i in range(skip):
-        try:
-            data = pickle.load(f)
-        except EOFError:
-            break
-
-    for i in range(skip, to):
-        try:
-            data = pickle.load(f)
-        except EOFError:
-            break
-
-        if DEN2D:
-            try:
-                plot_den2d(
-                    data['den2d_t'], 
-                    data['den2d_s'], 
-                    data['den2d_nelec_calc'], 
-                    data['run_dir'], 
-                    PKL_INFO
-                )
-                
-                # Print info
-                print('Done den2d, %s: %s' %(PKL_INFO, data['run_dir']))
-            except Exception as err:
-                print('%s, den2d, %s: %s' %(type(err).__name__, \
-                    PKL_INFO, data['run_dir']))
-                    
-        if PAIRDEN:
-            try:
-                plot_pairden(
-                    data['pairden_t'], 
-                    data['pairden_s'], 
-                    data['pairden_xfix'], 
-                    data['run_dir'], 
-                    PKL_INFO
-                )
-                
-                # Print info
-                print('Done pairden, %s: %s' %(PKL_INFO, data['run_dir']))
-            except Exception as err:
-                print('%s, pairden, %s: %s' %(type(err).__name__, \
-                    PKL_INFO, data['run_dir']))
-            
-        if PAIRDEN_ALL: 
-            try:
-                plot_pairden_all(
-                    data['pairden_dd'], 
-                    data['pairden_dt'], 
-                    data['pairden_du'], 
-                    data['pairden_ud'], 
-                    data['pairden_ut'], 
-                    data['pairden_uu'], 
-                    data['pairden_xfix'], 
-                    data['run_dir'], 
-                    PKL_INFO
-                )
-                
-                # Print info
-                print('Done pairden_all, %s: %s' %(PKL_INFO, data['run_dir']))
-            except Exception as err:
-                print('%s, pairden_all, %s: %s' %(type(err).__name__, \
-                    PKL_INFO, data['run_dir']))
-
-    f.close()
+                print('%s, pairden_all: %s' %(type(err).__name__, root))
 
 
 def plot_den2d(den2d_t, den2d_s, nelec_calc, path, run_mode):
@@ -540,9 +445,9 @@ if __name__ == '__main__':
         if len(args) > 1:
             if args[1] == 'normal':
                 RUN_TYPE = 0
-            elif args[1] == 'ext':
-                RUN_TYPE = 1
             elif args[1] == 'mean':
+                RUN_TYPE = 1
+            elif args[1] == 'ext':
                 RUN_TYPE = 2
             elif args[1] == 'ens':
                 RUN_TYPE = 3
@@ -554,25 +459,22 @@ if __name__ == '__main__':
                 'usage: python3 plot_density.py [run_type]\n\n' \
                 'run_type:\n' \
                 '  normal      parse data from all directories\n' \
-                '  ext         load data from extrapolated pickle file\n' \
-                '  mean        load data from mean pickle file\n' \
-                '  ens         load data from ensemble pickle file'
+                '  mean        load data from mean pickle files\n' \
+                '  ext         load data from extrapolated pickle files\n' \
+                '  ens         load data from ensemble pickle files'
             )
             sys.exit()
-        
-    if RUN_TYPE == 0:
-        plot_density()
-    elif RUN_TYPE == 1:
-        PKL_FILE_NAME = EXTRAPOLATED_FILE_NAME
-        PKL_INFO = 'extrapolated'
-        plot_density_from_pkl()
-    elif RUN_TYPE == 2:
+
+    if RUN_TYPE == 1:
         PKL_FILE_NAME = DATA_MEAN_FILE_NAME
         PKL_INFO = 'dmc2mean'
-        plot_density_from_pkl()
+    elif RUN_TYPE == 2:
+        PKL_FILE_NAME = DATA_EXT_FILE_NAME
+        PKL_INFO = 'extrapolated'
     elif RUN_TYPE == 3:
-        PKL_FILE_NAME = DATA_ENSEMBLE_FILE_NAME
+        PKL_FILE_NAME = DATA_ENS_FILE_NAME
         PKL_INFO = 'ensemble'
-        plot_density_from_pkl()
+
+    plot_density()
 
 
