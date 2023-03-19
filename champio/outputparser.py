@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 18/02/2023
+Last modified: 19/03/2023
 """
 
 import os
@@ -62,7 +62,7 @@ class OutputParser():
         self.opt_type = None
         self.etrial = np.nan
         self.eshift = np.nan
-        self.gauss_sigma_last = np.nan      
+        self.gauss_sigma_best = np.nan
         self.ss_corr_den = np.nan
         self.ss_corr_pairden = np.nan
         self.edge_pol_den = np.nan
@@ -369,14 +369,26 @@ class OutputParser():
         # ratio_int_kin
         self._ratio_int_kin_vmc()
         
-        # gauss_sigma_last
-        self._gauss_sigma_last()
-        
+        # optimization related variables
         if self.nopt_iter == 0:
             self.tot_E_1st = np.nan
             self.stdev_1st = np.nan
             self.Tcorr_1st = np.nan
             self.acceptance_1st = np.nan
+            self.ind_best_wf = np.nan
+        else:
+            # CHAMP determines the best wave function according to 
+            # energy_plus_err (ending of opt_wf subroutine in opt_wf.f90).
+            # If the run is terminated before best wave function output,
+            # use the parameters of the optimization step in which 
+            # energy+3*error+p_var*sigma is minimum. The index has minus 1 
+            # since energy is calculated after the parameters are set.
+            energy_err_sigma = self.tot_E_all + 3 * self.tot_E_err_all \
+                + self.p_var * self.stdev_all
+            self.ind_best_wf = np.argmin(energy_err_sigma) - 1
+        
+        # gauss_sigma_best
+        self._gauss_sigma_best()
             
     def _output_info_dmc(self):
         """
@@ -609,24 +621,27 @@ class OutputParser():
             except (IndexError, AttributeError, TypeError, ValueError):
                 self.ratio_int_kin = np.nan
                 
-    def _gauss_sigma_last(self):
+    def _gauss_sigma_best(self):
         _feature = self._feature
         _feature_all = self._feature_all
         _1st_last = self._1st_last
         data = self.data
-    
+        
         string = '(floating_gauss_x_width_best(it,i),i=1,nbasis)'
-        gauss_sigma_last = _feature(string, data[-50:], 0, float)
+        gauss_sigma_best = _feature(string, data[-50:], 0, float)
         
         string = '(floating_gauss_x_width_new(it,i),i=1,nbasis)'
         gauss_sigma_all = _feature_all(string, data, 0, float)
-        _, gauss_sigma_last_alt = _1st_last(gauss_sigma_all, float)
+        if self.ind_best_wf >= 0:
+            gauss_sigma_best_alt = gauss_sigma_all[self.ind_best_wf]
+        else:
+            gauss_sigma_best_alt = np.nan
         
-        if np.isnan(gauss_sigma_last):
-            gauss_sigma_last = gauss_sigma_last_alt
+        if np.isnan(gauss_sigma_best):
+            gauss_sigma_best = gauss_sigma_best_alt
             
         self.gauss_sigma_all = 1 / np.sqrt(gauss_sigma_all)
-        self.gauss_sigma_last = 1 / np.sqrt(gauss_sigma_last)
+        self.gauss_sigma_best = 1 / np.sqrt(gauss_sigma_best)
         
     def _split_data(self):
         string = '*********** START DMC CALCULATION  ***********'
@@ -654,7 +669,7 @@ class OutputParser():
         auconverter = AUConverter(self.m_r, self.kappa)
         
         length = [
-            'delta', 'a', 'gndot_rho', 'gauss_sigma', 'gauss_sigma_last'
+            'delta', 'a', 'gndot_rho', 'gauss_sigma', 'gauss_sigma_best'
         ]
         energy = [
             'gndot_v0', 'etrial', 'eshift', 'pop_err', 
@@ -702,7 +717,12 @@ class OutputParser():
                 string = '(floating_gauss_x_width_new(it,i),i=1,nbasis)'
                 ind, line = get_lines(string, self.data)
                 best_wf_found = False
-            
+
+                if self.ind_best_wf >= 0:
+                    line = [line[self.ind_best_wf]]
+                else:
+                    line = []
+
             if line:
                 return line[-1], best_wf_found
             else:
@@ -731,6 +751,13 @@ class OutputParser():
                 ind, line_b = get_lines(string_b, self.data)
                 ind, line_c = get_lines(string_c, self.data)
                 best_wf_found = False
+                
+                if self.ind_best_wf >= 0:
+                    line_a = [line_a[self.ind_best_wf]]
+                    line_b = [line_b[self.ind_best_wf]]
+                    line_c = [line_c[self.ind_best_wf]]
+                else:
+                    line_a, line_b, line_c = [], [], []
             
             if line_a and line_b and line_c:
                 return line_a[-1], line_b[-1], line_c[-1], best_wf_found
