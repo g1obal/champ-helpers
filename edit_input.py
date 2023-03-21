@@ -5,7 +5,7 @@ Edits currently present inputs using InputEditor.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 07/02/2023
+Last modified: 21/03/2023
 """
 
 import os
@@ -30,6 +30,8 @@ TAU = 0.1
 IFIXE = -3 # 0: no output, -1: 2d density, -3: 2d and pair density
 XMAX = None
 NOPT_ITER = 0
+ADD_DIAG = None
+P_VAR = None
 OPT_MODE = 0 # 0: both, 1: only width, 2: only jastrow
 
 UPDATE_GAUSS_WIDTH = True
@@ -84,6 +86,8 @@ def edit_input():
             editor.edit_ifixe(IFIXE)
             editor.edit_xmax(XMAX)
             editor.edit_nopt_iter(NOPT_ITER)
+            editor.edit_add_diag(ADD_DIAG)
+            editor.edit_p_var(P_VAR)
             editor.edit_opt_mode(OPT_MODE)
             
             if UPDATE_GAUSS_WIDTH:

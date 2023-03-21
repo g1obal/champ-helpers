@@ -6,7 +6,7 @@ Updates optimized parameters using output file.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 07/02/2023
+Last modified: 21/03/2023
 """
 
 import os
@@ -224,7 +224,31 @@ class InputEditor():
             
             settings_str = ' '.join(line[:5])
             info_str = ' '.join(line[5:])
-            self.data[ind] = generate_line(settings_str, info_str)  
+            self.data[ind] = generate_line(settings_str, info_str)
+            
+    def edit_add_diag(self, add_diag):
+        if add_diag is not None:
+            string = 'nopt_iter,nblk_max,add_diag(1),p_var,tol_energy' 
+            ind, line = get_lines(string, self.data, first_occurance=True)
+            line = line.split()
+            
+            line[2] = ('%.1e' %(add_diag)).replace('e', 'd')
+            
+            settings_str = ' '.join(line[:5])
+            info_str = ' '.join(line[5:])
+            self.data[ind] = generate_line(settings_str, info_str)
+            
+    def edit_p_var(self, p_var):
+        if p_var is not None:
+            string = 'nopt_iter,nblk_max,add_diag(1),p_var,tol_energy' 
+            ind, line = get_lines(string, self.data, first_occurance=True)
+            line = line.split()
+            
+            line[3] = '%.2f' %(p_var)
+            
+            settings_str = ' '.join(line[:5])
+            info_str = ' '.join(line[5:])
+            self.data[ind] = generate_line(settings_str, info_str)
             
     def edit_opt_mode(self, opt_mode):
         if opt_mode is not None:

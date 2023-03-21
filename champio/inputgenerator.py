@@ -3,7 +3,7 @@ Input Generator class
 
 Author: Gokhan Oztarhan
 Created date: 18/06/2019
-Last modified: 18/02/2023
+Last modified: 21/03/2023
 """
 
 from os import urandom
@@ -136,6 +136,9 @@ class InputGenerator():
         self.opt_mode = 0 # 0: both, 1: only width, 2: only jastrow
         self.opt_constraint = 1
         self.nopt_iter = 25
+        self.add_diag = -0.5 # CHAMP uses abs(add_diag)
+                             # negative sign for fixed add_diag
+                             # positive sign for optimization of add_diag
         self.p_var = 0.2 # 0: energy, 1:variance
         self.iopt = '00002' # last digit 2 is newton, 
                             # 01002 also a good choice, 

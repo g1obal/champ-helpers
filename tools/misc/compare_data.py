@@ -1,7 +1,7 @@
 """
 Author: Gokhan Oztarhan
 Created date: 20/11/2022
-Last modified: 19/03/2023
+Last modified: 21/03/2023
 """
 
 import numpy as np
@@ -18,7 +18,8 @@ df_old = df_old.sort_values(sort_cols,  ignore_index=True)
 cols = [
     'm_r', 'kappa', 'a', 'nelec', 'nup', 'ndn', 'norb', 'nbasis', 
     'gndot_v0', 'gndot_rho', 'gndot_s', 'gndot_k', 'gauss_sigma', 
-    'scalek', 'nopt_iter', 'p_var', 'etrial', 'eshift', 'gauss_sigma_best', 
+    'scalek', 'nopt_iter', 'add_diag', 'p_var', 
+    'etrial', 'eshift', 'gauss_sigma_best', 
     'ss_corr_den', 'ss_corr_pairden', 'edge_pol_den', 'edge_pol_pairden',
     'tot_E_1st', 'tot_E', 'tot_E_err', 'pop_err', 
     'stdev_1st', 'stdev', 'stdev_err', 'ratio_int_kin', 

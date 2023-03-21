@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 19/03/2023
+Last modified: 21/03/2023
 """
 
 import os
@@ -58,6 +58,7 @@ class OutputParser():
         self.gauss_sigma = np.nan
         self.scalek = np.nan
         self.nopt_iter = np.nan
+        self.add_diag = np.nan
         self.p_var = np.nan
         self.opt_type = None
         self.etrial = np.nan
@@ -252,6 +253,7 @@ class OutputParser():
         
         string = 'nopt_iter,nblk_max,add_diag(1),p_var,tol_energy='
         self.nopt_iter = _feature(string, data, 1, int)
+        self.add_diag = _feature(string, data, 3, float, replace=['D','E'])
         self.p_var = _feature(string, data, 4, float, replace=['D','E'])
         if self.nopt_iter > 0:
             self._opt_type()
@@ -377,18 +379,11 @@ class OutputParser():
             self.acceptance_1st = np.nan
             self.ind_best_wf = np.nan
         else:
-            # CHAMP determines the best wave function according to 
-            # energy_plus_err (ending of opt_wf subroutine in opt_wf.f90).
-            # If the run is terminated before best wave function output,
-            # use the parameters of the optimization step in which 
-            # energy+3*error+p_var*sigma is minimum. The index has minus 1 
-            # since energy is calculated after the parameters are set.
-            energy_err_sigma = self.tot_E_all + 3 * self.tot_E_err_all \
-                + self.p_var * self.stdev_all
-            self.ind_best_wf = np.argmin(energy_err_sigma) - 1
-        
-        # gauss_sigma_best
-        self._gauss_sigma_best()
+            # best optimization step
+            self._opt_step_best()
+
+            # gauss_sigma_best
+            self._gauss_sigma_best()
             
     def _output_info_dmc(self):
         """
@@ -620,7 +615,22 @@ class OutputParser():
                 self.ratio_int_kin = self.int_E / self.pb_kin_E
             except (IndexError, AttributeError, TypeError, ValueError):
                 self.ratio_int_kin = np.nan
-                
+    
+    def _opt_step_best(self):
+        try:
+            # CHAMP determines the best wave function according to 
+            # energy_plus_err (ending of opt_wf subroutine in opt_wf.f90).
+            # If the run is terminated before best wave function output,
+            # use the parameters of the optimization step in which 
+            # energy+3*error+p_var*sigma is minimum. The index has minus 1 
+            # since energy is calculated after the parameters are set.
+            energy_err_sigma = self.tot_E_all + 3 * self.tot_E_err_all \
+                + self.p_var * self.stdev_all
+            # nanargmin ignores NaN values
+            self.ind_best_wf = np.nanargmin(energy_err_sigma) - 1
+        except (IndexError, AttributeError, TypeError, ValueError):
+            self.ind_best_wf = np.nan
+    
     def _gauss_sigma_best(self):
         _feature = self._feature
         _feature_all = self._feature_all
