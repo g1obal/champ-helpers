@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 21/03/2023
+Last modified: 29/03/2023
 """
 
 import os
@@ -124,6 +124,9 @@ class OutputParser():
         # Positions of the electrons or centers
         self.ncent = np.nan
         self.pos = np.nan
+        
+        # Best step of VMC optimization runs
+        self.ind_best_wf = np.nan
         
         # Indices of nearest neighbors, edges and bulk (interior points)
         self.ind_NN = np.nan
@@ -307,11 +310,6 @@ class OutputParser():
         """
         Parses VMC output.
         Reads all optimization steps.
-        Exracts first and last values of features for check.
-        If n_opt_steps > 0, the last VMC run is the run with the best
-        wavefunction parameters which optimization founds.
-        Sometimes best wavefunction parameters are not in the last step of
-        optimization, however the last run is with the best parameters.
         """
         _feature = self._feature
         _feature_all = self._feature_all
@@ -319,21 +317,21 @@ class OutputParser():
         data = self.data
         
         # tot_E
-        self.tot_E_all = _feature_all('total E', data, 3, float)
-        self.tot_E_err_all = _feature_all('total E', data, 5, float)
+        self.tot_E_all = _feature_all('total E =', data, 3, float)
+        self.tot_E_err_all = _feature_all('total E =', data, 5, float)
         self.tot_E_1st, self.tot_E = _1st_last(self.tot_E_all, float)
         _, self.tot_E_err = _1st_last(self.tot_E_err_all, float)
         
         # stdev
-        self.stdev_all = _feature_all('total E', data, -4, float)
-        self.stdev_err_all = _feature_all('total E', data, -2, float)
+        self.stdev_all = _feature_all('total E =', data, -4, float)
+        self.stdev_err_all = _feature_all('total E =', data, -2, float)
         self.stdev_1st, self.stdev = _1st_last(
             self.stdev_all, float
         )
         _, self.stdev_err = _1st_last(self.stdev_err_all, float)
         
         # Tcorr
-        self.Tcorr_all = _feature_all('total E', data, -1, float)
+        self.Tcorr_all = _feature_all('total E =', data, -1, float)
         self.Tcorr_1st, self.Tcorr = _1st_last(self.Tcorr_all, float)
         
         # pot_E
@@ -408,7 +406,7 @@ class OutputParser():
         self.wts_fs = _feature('wts with fs =', data_dmc, 4, float)
     
         # tot_E vmc
-        self.tot_E_1st = _feature('total E', data_vmc, 3, float)
+        self.tot_E_1st = _feature('total E =', data_vmc, 3, float)
         
         # tot_E_0 dmc
         tot_E_0 = _feature('total energy (   0)', data_dmc, -6, float)
@@ -421,7 +419,7 @@ class OutputParser():
         self.pop_err = np.abs(self.tot_E - tot_E_0)
         
         # stdev vmc
-        self.stdev_1st = _feature('total E', data_vmc, -4, float) 
+        self.stdev_1st = _feature('total E =', data_vmc, -4, float)
         
         # stdev dmc
         self.stdev = _feature('total energy (  50)', data_dmc, -2, float)  
@@ -634,7 +632,6 @@ class OutputParser():
     def _gauss_sigma_best(self):
         _feature = self._feature
         _feature_all = self._feature_all
-        _1st_last = self._1st_last
         data = self.data
         
         string = '(floating_gauss_x_width_best(it,i),i=1,nbasis)'
