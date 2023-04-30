@@ -3,7 +3,7 @@ Writer module for InputGenerator
 
 Author: Gokhan Oztarhan
 Created date: 11/06/2019
-Last modified: 21/03/2023
+Last modified: 30/04/2023
 """
 
 import time
@@ -266,7 +266,8 @@ def inputwriter(inputgenerator):
     s3 = \
         '{:.1e}'.format(inputgenerator.add_diag).replace('e', 'd') # add_diag(1)
     s4 = '{:.2f}'.format(inputgenerator.p_var) # p_var
-    s5 = '{:.0e}'.format(1.e-8).replace('e', 'd') # tol_energy
+    s5 = '{:.0e}'.format(inputgenerator.tol_energy) \
+        .replace('e', 'd') # tol_energy
     settings_str = ' '.join([s1,s2,s3,s4,s5])
     info_str = 'nopt_iter,nblk_max,add_diag(1),p_var,tol_energy'
     input_str += generate_line(settings_str, info_str)

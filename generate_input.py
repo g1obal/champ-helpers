@@ -5,7 +5,7 @@ Generating inputs for CHAMP program.
 
 Author: Gokhan Oztarhan
 Created date: 09/06/2019
-Last modified: 21/03/2023
+Last modified: 30/04/2023
 """
 
 import os
@@ -47,7 +47,7 @@ CONFIG = {
     'gndot_v0': -25.28,
     'gndot_rho': 20,
     'gndot_s': 1.40, # unitless
-    'gndot_k': 2.61157e-4, # unit: [ENERGY] / [LENGTH]^2
+    'gndot_k': 0, # unit: [ENERGY] / [LENGTH]^2
 
     # [basis]
     'gauss_sigma': 10.97, # width guess for Gaussian basis
@@ -108,11 +108,12 @@ CONFIG = {
     # [opt]
     'opt_mode': 0, # 0: both, 1: only width, 2: only jastrow
     'opt_constraint': 1,
-    'nopt_iter': 25,
-    'add_diag': -0.5, # CHAMP uses abs(add_diag)
+    'nopt_iter': 30,
+    'add_diag': 1e-4, # CHAMP uses abs(add_diag)
                       # negative sign for fixed add_diag
                       # positive sign for optimization of add_diag
     'p_var': 0.2, # 0: energy, 1:variance
+    'tol_energy': 1e-8, # energy tolerance to finish optimization
     'iopt': '00002', # last digit 2 is newton, 
                      # 01002 also a good choice, 
                      # 31101 is linear (bad choice)

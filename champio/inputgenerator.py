@@ -3,7 +3,7 @@ Input Generator class
 
 Author: Gokhan Oztarhan
 Created date: 18/06/2019
-Last modified: 21/03/2023
+Last modified: 30/04/2023
 """
 
 from os import urandom
@@ -65,7 +65,7 @@ class InputGenerator():
         self.gndot_v0 = -25.28
         self.gndot_rho = 20
         self.gndot_s = 1.40 # unitless
-        self.gndot_k = 2.61157e-4 # unit: [ENERGY] / [LENGTH]^2
+        self.gndot_k = 0 # unit: [ENERGY] / [LENGTH]^2
         
         # [basis]
         self.gauss_sigma = 10.97 # width guess for Gaussian basis
@@ -135,11 +135,12 @@ class InputGenerator():
         # [opt]
         self.opt_mode = 0 # 0: both, 1: only width, 2: only jastrow
         self.opt_constraint = 1
-        self.nopt_iter = 25
-        self.add_diag = -0.5 # CHAMP uses abs(add_diag)
+        self.nopt_iter = 30
+        self.add_diag = 1e-4 # CHAMP uses abs(add_diag)
                              # negative sign for fixed add_diag
                              # positive sign for optimization of add_diag
         self.p_var = 0.2 # 0: energy, 1:variance
+        self.tol_energy = 1e-8 # energy tolerance to finish optimization
         self.iopt = '00002' # last digit 2 is newton, 
                             # 01002 also a good choice, 
                             # 31101 is linear (bad choice)
