@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 29/03/2023
+Last modified: 05/04/2023
 """
 
 import os
@@ -126,6 +126,7 @@ class OutputParser():
         self.pos = np.nan
         
         # Best step of VMC optimization runs
+        self.ind_best_run = np.nan
         self.ind_best_wf = np.nan
         
         # Indices of nearest neighbors, edges and bulk (interior points)
@@ -313,75 +314,71 @@ class OutputParser():
         """
         _feature = self._feature
         _feature_all = self._feature_all
-        _1st_last = self._1st_last
+        _1st_best = self._1st_best
         data = self.data
         
-        # tot_E
+        # tot_E (here to obtain best opt. step)
         self.tot_E_all = _feature_all('total E =', data, 3, float)
         self.tot_E_err_all = _feature_all('total E =', data, 5, float)
-        self.tot_E_1st, self.tot_E = _1st_last(self.tot_E_all, float)
-        _, self.tot_E_err = _1st_last(self.tot_E_err_all, float)
         
-        # stdev
+        # stdev (here to obtain best opt. step)
         self.stdev_all = _feature_all('total E =', data, -4, float)
-        self.stdev_err_all = _feature_all('total E =', data, -2, float)
-        self.stdev_1st, self.stdev = _1st_last(
-            self.stdev_all, float
-        )
-        _, self.stdev_err = _1st_last(self.stdev_err_all, float)
-        
-        # Tcorr
-        self.Tcorr_all = _feature_all('total E =', data, -1, float)
-        self.Tcorr_1st, self.Tcorr = _1st_last(self.Tcorr_all, float)
-        
-        # pot_E
-        self.pot_E_all = _feature_all('potential E', data, 3, float)
-        self.pot_E_err_all = _feature_all('potential E', data, 5, float)
-        _, self.pot_E = _1st_last(self.pot_E_all, float)
-        _, self.pot_E_err = _1st_last(self.pot_E_err_all, float)
-        
-        # int_E
-        self.int_E_all = _feature_all('interaction E', data, 3, float)
-        self.int_E_err_all = _feature_all('interaction E', data, 5, float)
-        _, self.int_E = _1st_last(self.int_E_all, float)
-        _, self.int_E_err = _1st_last(self.int_E_err_all, float)
-        
-        # jf_kin_E
-        self.jf_kin_E_all = _feature_all('jf kinetic E', data, 4, float)
-        self.jf_kin_E_err_all = _feature_all('jf kinetic E', data, 6, float)
-        _, self.jf_kin_E = _1st_last(self.jf_kin_E_all, float)
-        _, self.jf_kin_E_err = _1st_last(self.jf_kin_E_err_all, float)
-        
-        # pb_kin_E
-        self.pb_kin_E_all = _feature_all('pb kinetic E', data, 4, float)
-        self.pb_kin_E_err_all = _feature_all('pb kinetic E', data, 6, float)
-        _, self.pb_kin_E = _1st_last(self.pb_kin_E_all, float)
-        _, self.pb_kin_E_err = _1st_last(self.pb_kin_E_err_all, float)
-        
-        # acceptance
-        self.acceptance_all = _feature_all(
-            'acceptance', data, -1, float, startswith=True
-        )
-        self.acceptance_1st, self.acceptance = _1st_last(
-            self.acceptance_all, float
-        )
-        
-        # ratio_int_kin
-        self._ratio_int_kin_vmc()
         
         # optimization related variables
-        if self.nopt_iter == 0:
-            self.tot_E_1st = np.nan
-            self.stdev_1st = np.nan
-            self.Tcorr_1st = np.nan
-            self.acceptance_1st = np.nan
-            self.ind_best_wf = np.nan
-        else:
+        if self.nopt_iter > 0:
             # best optimization step
             self._opt_step_best()
 
             # gauss_sigma_best
             self._gauss_sigma_best()
+        
+        # tot_E (remainig features)
+        self.tot_E_1st, self.tot_E = _1st_best(self.tot_E_all, float)
+        _, self.tot_E_err = _1st_best(self.tot_E_err_all, float)
+        
+        # stdev (remainig features)
+        self.stdev_err_all = _feature_all('total E =', data, -2, float)
+        self.stdev_1st, self.stdev = _1st_best(self.stdev_all, float)
+        _, self.stdev_err = _1st_best(self.stdev_err_all, float)
+        
+        # Tcorr
+        self.Tcorr_all = _feature_all('total E =', data, -1, float)
+        self.Tcorr_1st, self.Tcorr = _1st_best(self.Tcorr_all, float)
+        
+        # pot_E
+        self.pot_E_all = _feature_all('potential E', data, 3, float)
+        self.pot_E_err_all = _feature_all('potential E', data, 5, float)
+        _, self.pot_E = _1st_best(self.pot_E_all, float)
+        _, self.pot_E_err = _1st_best(self.pot_E_err_all, float)
+        
+        # int_E
+        self.int_E_all = _feature_all('interaction E', data, 3, float)
+        self.int_E_err_all = _feature_all('interaction E', data, 5, float)
+        _, self.int_E = _1st_best(self.int_E_all, float)
+        _, self.int_E_err = _1st_best(self.int_E_err_all, float)
+        
+        # jf_kin_E
+        self.jf_kin_E_all = _feature_all('jf kinetic E', data, 4, float)
+        self.jf_kin_E_err_all = _feature_all('jf kinetic E', data, 6, float)
+        _, self.jf_kin_E = _1st_best(self.jf_kin_E_all, float)
+        _, self.jf_kin_E_err = _1st_best(self.jf_kin_E_err_all, float)
+        
+        # pb_kin_E
+        self.pb_kin_E_all = _feature_all('pb kinetic E', data, 4, float)
+        self.pb_kin_E_err_all = _feature_all('pb kinetic E', data, 6, float)
+        _, self.pb_kin_E = _1st_best(self.pb_kin_E_all, float)
+        _, self.pb_kin_E_err = _1st_best(self.pb_kin_E_err_all, float)
+        
+        # acceptance
+        self.acceptance_all = _feature_all(
+            'acceptance', data, -1, float, startswith=True
+        )
+        self.acceptance_1st, self.acceptance = _1st_best(
+            self.acceptance_all, float
+        )
+        
+        # ratio_int_kin
+        self._ratio_int_kin_vmc()
             
     def _output_info_dmc(self):
         """
@@ -389,7 +386,7 @@ class OutputParser():
         """
         _feature = self._feature
         _feature_all = self._feature_all
-        _1st_last = self._1st_last
+        _1st_best = self._1st_best
         data_vmc = self.data_vmc
         data_dmc = self.data_dmc
         
@@ -444,12 +441,13 @@ class OutputParser():
         self.pb_kin_E_err = _feature('pb kinetic energy', data_dmc, 6, float)
         
         # acceptance vmc
+        # acceptance_1st is the acceptance of the vmc run at the start of dmc
+        # run if mcconfigs is not provided to dmc. That's why, value_best
+        # is assigned to acceptance_1st, below.
         acceptance_vmc = _feature_all(
             'acceptance', data_vmc, -1, float, startswith=True
         )
-        self.acceptance_1st, _ = _1st_last(
-            acceptance_vmc, float
-        )
+        _, self.acceptance_1st = _1st_best(acceptance_vmc, float)
         
         # acceptance dmc
         self.acceptance = _feature(
@@ -625,8 +623,10 @@ class OutputParser():
             energy_err_sigma = self.tot_E_all + 3 * self.tot_E_err_all \
                 + self.p_var * self.stdev_all
             # nanargmin ignores NaN values
-            self.ind_best_wf = np.nanargmin(energy_err_sigma) - 1
+            self.ind_best_run = np.nanargmin(energy_err_sigma)
+            self.ind_best_wf = self.ind_best_run - 1
         except (IndexError, AttributeError, TypeError, ValueError):
+            self.ind_best_run = np.nan
             self.ind_best_wf = np.nan
     
     def _gauss_sigma_best(self):
@@ -923,18 +923,22 @@ class OutputParser():
  
     #-----------------------------------#
     # Class utilities:                  #
-    # _1st_last, _feature, _feature_all #        
+    # _1st_best, _feature, _feature_all #        
     #-----------------------------------#  
     
-    def _1st_last(self, value_all, _type):
+    def _1st_best(self, value_all, _type):
         try:
-            value_1st = value_all[0]
-            value_last = value_all[-1]
+            if self.nopt_iter == 0:
+                value_1st = np.nan
+                value_best = value_all[-1]
+            else:
+                value_1st = value_all[0]
+                value_best = value_all[self.ind_best_run]
         except (IndexError, AttributeError, TypeError, ValueError):
             value_1st = self.FALLBACK[_type]
-            value_last = self.FALLBACK[_type]
-            
-        return value_1st, value_last
+            value_best = self.FALLBACK[_type]
+        
+        return value_1st, value_best
    
     def _feature(
         self, string, data, _index, _type, 
