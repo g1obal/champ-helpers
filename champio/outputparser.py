@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 05/04/2023
+Last modified: 05/05/2023
 """
 
 import os
