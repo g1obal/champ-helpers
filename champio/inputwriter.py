@@ -3,7 +3,7 @@ Writer module for InputGenerator
 
 Author: Gokhan Oztarhan
 Created date: 11/06/2019
-Last modified: 30/04/2023
+Last modified: 15/05/2023
 """
 
 import time
@@ -106,7 +106,7 @@ def inputwriter(inputgenerator):
     info_str = 'ndim'
     input_str += generate_line(settings_str, info_str)
     
-    s1 = '{:d}'.format(1) # nctype
+    s1 = '{:d}'.format(inputgenerator.nctype) # nctype
     s2 = '{:d}'.format(inputgenerator.ncent) # ncent
     settings_str = ' '.join([s1,s2]) 
     info_str = 'nctype,ncent'
@@ -114,12 +114,14 @@ def inputwriter(inputgenerator):
     
     s1 = ''
     for i in range(inputgenerator.ncent):
-        s1 += '{:d} '.format(1)
+        s1 += '{:d} '.format(inputgenerator.iwtype[i])
     settings_str = s1
     info_str = '(iwtype(i),i=1,ncent)'
     input_str += generate_line(settings_str, info_str)
     
-    s1 = '{:.8f} '.format(inputgenerator.znuc) 
+    s1 = ''
+    for i in range(inputgenerator.nctype):
+        s1 += '{:.8f} '.format(inputgenerator.znuc)
     settings_str = s1
     info_str = '(znuc(i),i=1,nctype)'
     input_str += generate_line(settings_str, info_str)
@@ -223,18 +225,20 @@ def inputwriter(inputgenerator):
     info_str = 'scalek,a21'
     input_str += generate_line(settings_str, info_str)
     
-    settings_str = '0. 0. 0. 0. 0. 0. 0. '
-    info_str = '(a(iparmj),iparmj=1,nparma)'
-    input_str += generate_line(settings_str, info_str)
+    for i in range(inputgenerator.nctype):
+        settings_str = '0. 0. 0. 0. 0. 0. 0. '
+        info_str = '(a(iparmj),iparmj=1,nparma)'
+        input_str += generate_line(settings_str, info_str)
     
     settings_str = '1. 0.2 0. 0. 0. 0. 0. '
     info_str = '(b(iparmj),iparmj=1,nparmb)'
     input_str += generate_line(settings_str, info_str)
     
-    settings_str = '0. 0. 0. 0. 0. 0. 0. 0. 0.  0. 0. 0. 0. 0. 0. 0.' \
-                   + '  0. 0. 0. 0.  0. 0. 0. '
-    info_str = '(c(iparmj),iparmj=1,nparmc)'
-    input_str += generate_line(settings_str, info_str)
+    for i in range(inputgenerator.nctype):
+        settings_str = '0. 0. 0. 0. 0. 0. 0. 0. 0.  0. 0. 0. 0. 0. 0. 0.' \
+                       + '  0. 0. 0. 0.  0. 0. 0. '
+        info_str = '(c(iparmj),iparmj=1,nparmc)'
+        input_str += generate_line(settings_str, info_str)
     
     input_str += '\n'
     
@@ -300,21 +304,32 @@ def inputwriter(inputgenerator):
     input_str += generate_line(settings_str, info_str)
     
     s1 = '{:d}'.format(inputgenerator.nparml)
-    s2 = '{:d}'.format(inputgenerator.nparma)
+    s2 = ['{:d}'.format(inputgenerator.nparma) \
+        for i in range(inputgenerator.nctype)]
     s3 = '{:d}'.format(inputgenerator.nparmb)
-    s4 = '{:d}'.format(inputgenerator.nparmc)
-    s5 = '{:d}'.format(inputgenerator.nparmf)
+    s4 = ['{:d}'.format(inputgenerator.nparmc) \
+        for i in range(inputgenerator.nctype)]
+    s5 = ['{:d}'.format(inputgenerator.nparmf) \
+        for i in range(inputgenerator.nctype)]
     s6 = '{:d}'.format(inputgenerator.nparmcsf)
     s7 = '{:d}'.format(inputgenerator.nparms)
     s8 = '{:d}'.format(inputgenerator.nparmg)
     s9 = '{:d}'.format(inputgenerator.nparmo_1)
     s10 = '{:d}'.format(inputgenerator.nparmo_2)
     s11 = '{:d}'.format(inputgenerator.nparmo_3)
-    s1 = ' '.join([s1,s2,s3,s4,s5,s6,s7,s8])
+    s1 = ' '.join([s1,*s2,s3,*s4,*s5,s6,s7,s8])
     s2 = ' '.join([s9,s10,s11])
     settings_str = '   '.join([s1,s2])
-    info_str = 'nparml,nparma,nparmb,nparmc,nparmf,nparmcsf,nparms,nparmg,' \
-               + '(nparmo(i),i=1,notype) - notype is related to ibasis'
+    info_str = 'nparml,'
+    for i in range(inputgenerator.nctype):
+        info_str += 'nparma,'
+    info_str += 'nparmb,'
+    for i in range(inputgenerator.nctype):
+        info_str += 'nparmc,'
+    for i in range(inputgenerator.nctype):
+        info_str += 'nparmf,'
+    info_str += 'nparmcsf,nparms,nparmg,' \
+        + '(nparmo(i),i=1,notype) - notype is related to ibasis'
     input_str += generate_line(settings_str, info_str)    
     
     settings_str = ' '
@@ -353,18 +368,20 @@ def inputwriter(inputgenerator):
     info_str = '(iwcsf(iparm),iparm=1,nparmcsf)'
     input_str += generate_line(settings_str, info_str)   
 
-    settings_str = '    3 4 5 6 7'
-    info_str = '(iwjasa(iparm),iparm=1,nparma)'
-    input_str += generate_line(settings_str, info_str)   
+    for i in range(inputgenerator.nctype):
+        settings_str = '    3 4 5 6 7'
+        info_str = '(iwjasa(iparm),iparm=1,nparma)'
+        input_str += generate_line(settings_str, info_str)   
     
     settings_str = '  2 3 4 5 6 7'
     info_str = '(iwjasb(iparm),iparm=1,nparmb)'
     input_str += generate_line(settings_str, info_str)   
     
-    settings_str = '    3   5   7 8 9    11    13 14 15 16 17 18' \
-                   + '    20 21    23    '
-    info_str = '(iwjasc(iparm),iparm=1,nparmc)'
-    input_str += generate_line(settings_str, info_str)   
+    for i in range(inputgenerator.nctype):
+        settings_str = '    3   5   7 8 9    11    13 14 15 16 17 18' \
+                       + '    20 21    23    '
+        info_str = '(iwjasc(iparm),iparm=1,nparmc)'
+        input_str += generate_line(settings_str, info_str)   
 
     settings_str = '0 0 0'
     info_str = 'necn,nebase - moved from fit'

@@ -3,7 +3,7 @@ Input Generator class
 
 Author: Gokhan Oztarhan
 Created date: 18/06/2019
-Last modified: 30/04/2023
+Last modified: 15/05/2023
 """
 
 from os import urandom
@@ -123,6 +123,9 @@ class InputGenerator():
         
         # [jastrow]
         self.scalek = 0.2 # 0.2 is default
+        self.nctype_of_edges = 1 # 1: same iwtype for all dots
+                                 # 2: dots at the edges have different iwtype
+                                 #    (corners not included)
         
         # [optional champ]
         self.ifixe = 0 #  0: do not write 2d density, 
@@ -162,6 +165,7 @@ class InputGenerator():
         self.set_units()
         self.set_delta()
         self.set_lattice()
+        self.set_nctype()
         self.set_opt()
         self.set_irn()
         
@@ -261,6 +265,31 @@ class InputGenerator():
         self.latmax = np.abs(lattice.pos).max().max()
         self.xmax = self.latmax + self.gauss_sigma_au + self.a_au
         
+    def set_nctype(self):
+        self.nctype = 1
+        self.iwtype = np.full(self.ncent, 1)
+        
+        self.ind_edge = np.nan
+        
+        if self.nctype_of_edges == 2:
+            # Find edge indices
+            unique, counts = \
+                np.unique(self.ind_NN.flatten(), return_counts=True)
+            ind_sorted = np.argsort(unique)
+            counts = counts[ind_sorted]
+            self.ind_edge = np.where(counts < 3)[0]
+            
+            # Drop corner sites from edge indices for triangular zigzag flake
+            include_corners = False
+            
+            if not include_corners:
+                dist = np.sqrt((self.pos[self.ind_edge,:]**2).sum(axis=1))
+                self.ind_edge = self.ind_edge[dist < dist.max() - self.a_au / 8]
+            
+            # Set nctype and iwtype of edges
+            self.nctype = 2
+            self.iwtype[self.ind_edge] = 2
+        
     def set_opt(self):      
         self.nblk_max = self.nblk 
         
@@ -286,12 +315,17 @@ class InputGenerator():
             self.nparmc = 0
         elif self.opt_mode == 2:
             self.nparmo_3 = 0
+        
+        nparm = self.nparml + self.nparmb + self.nparmcsf \
+            + self.nparms + self.nparmg + self.nparmo_1 + self.nparmo_2 \
+            + np.abs(self.nparmo_3)
+        
+        for i in range(self.nctype):
+            nparm += self.nparma
+            nparm += self.nparmc
+            nparm += self.nparmf
             
-        self.nparm = np.int(
-            self.nparml + self.nparma + self.nparmb + self.nparmc
-            + self.nparmf + self.nparmcsf + self.nparms + self.nparmg
-            + self.nparmo_1 + self.nparmo_2 + np.abs(self.nparmo_3)
-        ) 
+        self.nparm = np.int(nparm)
   
     def set_title(self):
         self.title = "'" \

@@ -5,7 +5,7 @@ Generating inputs for CHAMP program.
 
 Author: Gokhan Oztarhan
 Created date: 09/06/2019
-Last modified: 30/04/2023
+Last modified: 15/05/2023
 """
 
 import os
@@ -14,6 +14,8 @@ import shutil
 import time
 import datetime
 import logging
+
+import numpy as np
 
 from champio.logger import set_logger, unset_logger
 from champio.inputgenerator import InputGenerator
@@ -93,10 +95,13 @@ CONFIG = {
     'etrial': 0.1,
     'n_walkers': 25,
     'tau': 0.1,
-            
+    
     # [jastrow]
     'scalek': 0.2, # 0.2 is default
-            
+    'nctype_of_edges': 1, # 1: same iwtype for all dots
+                          # 2: dots at the edges have different iwtype
+                          #    (corners not included)
+    
     # [optional champ]
     'ifixe': 0, #  0: do not write 2d density, 
                 # -1: write out 2d density
@@ -104,7 +109,7 @@ CONFIG = {
     'xfix_pos': None, # fixed electron position, example: [0.2, 0.5]
                       # None to find automatically
     'xfix_angle': 60, # fixed electron symmetry, default is 60
-            
+    
     # [opt]
     'opt_mode': 0, # 0: both, 1: only width, 2: only jastrow
     'opt_constraint': 1,
@@ -180,7 +185,7 @@ def generate_input_multiple():
     info = 'gauss'
     orb_dot_coef = 0 # 0: gauss, 1: orbitals read from orb_dot_coef file 
                      # >0: overwrites spin_order
-    
+
     gndot_v0_listoflist = [
         [-38.48],
         [-32.82],
@@ -222,7 +227,7 @@ def generate_input_multiple():
         [0.0],  
         [0.0],  
         [0.0],
-    ]          
+    ]
     
     run_dir_naming_elements = [
         'rho',
@@ -230,6 +235,7 @@ def generate_input_multiple():
         'v0',
         'gsigma',
         'k',
+        'nctype-edge',
         'info',
     ] 
     
@@ -268,7 +274,10 @@ def generate_input_multiple():
                     if 'gsigma' in run_dir_naming_elements:
                         run_dir += 'gsigma%s' %gauss_sigma + '_'
                     if 'k' in run_dir_naming_elements:
-                        run_dir += 'k%.5e' %gndot_k + '_' 
+                        run_dir += 'k%.5e' %gndot_k + '_'
+                    if 'nctype-edge' in run_dir_naming_elements:
+                        run_dir += \
+                            'nctype-edge%i' %CONFIG['nctype_of_edges'] + '_'
                     if 'info' in run_dir_naming_elements:
                         run_dir += info
                     if run_dir[-1] == '_':
