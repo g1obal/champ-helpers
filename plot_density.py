@@ -3,7 +3,7 @@ Plot Density
 
 Author: Gokhan Oztarhan
 Created date: 18/01/2022
-Last modified: 15/03/2023
+Last modified: 29/07/2023
 """
 
 import os
@@ -115,6 +115,7 @@ def parse_and_plot(paths):
                     parse_density=True, 
                     calculate_ss_corr=False,
                     calculate_edge_pol=False,
+                    calculate_U_onsite=False,
                 )
                 outparser.parse()
             else:

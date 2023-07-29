@@ -5,7 +5,7 @@ Calculate the mean of mpi2 runs with different random seeds.
 
 Author: Gokhan Oztarhan
 Created date: 04/07/2022
-Last modified: 15/03/2023
+Last modified: 29/07/2023
 """
 
 import sys
@@ -260,6 +260,12 @@ def set_ss_corrs(parser_mean):
     
     # Calculate edge polarization for pair density
     parser_mean.edge_pol_pairden = parser_mean._edge_pol(parser_mean.pairden_s)
+    
+    # Calculate U_onsite for density
+    parser_mean.U_onsite_den = parser_mean._U_onsite(parser_mean.den2d_t)
+    
+    # Calculate U_onsite for pair density
+    parser_mean.U_onsite_pairden = parser_mean._U_onsite(parser_mean.pairden_t)
         
     return parser_mean
     

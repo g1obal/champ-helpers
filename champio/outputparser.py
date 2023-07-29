@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 05/05/2023
+Last modified: 29/07/2023
 """
 
 import os
@@ -35,6 +35,7 @@ class OutputParser():
         parse_density=True, 
         calculate_ss_corr=True,
         calculate_edge_pol=True,
+        calculate_U_onsite=True,
     ):
         self.parent_path = None
         self.run_dir = None
@@ -68,6 +69,8 @@ class OutputParser():
         self.ss_corr_pairden = np.nan
         self.edge_pol_den = np.nan
         self.edge_pol_pairden = np.nan
+        self.U_onsite_den = np.nan
+        self.U_onsite_pairden = np.nan
         self.tot_E_1st = np.nan
         self.tot_E = np.nan 
         self.tot_E_err = np.nan
@@ -152,6 +155,9 @@ class OutputParser():
         # Boolean for calculation of edge polarization
         self.calculate_edge_pol = calculate_edge_pol
         
+        # Boolean for calculation of U onsite (Hubbard U)
+        self.calculate_U_onsite = calculate_U_onsite
+        
     def dataframe(self):
         data = {}
         for feature in self.features:
@@ -198,6 +204,10 @@ class OutputParser():
             if self.calculate_edge_pol:
                 self.edge_pol_den = self._edge_pol(self.den2d_s)
                 self.edge_pol_pairden = self._edge_pol(self.pairden_s)
+            
+            if self.calculate_U_onsite:
+                self.U_onsite_den = self._U_onsite(self.den2d_t)
+                self.U_onsite_pairden = self._U_onsite(self.pairden_t)
                 
             self._cpu_time()
             
@@ -679,7 +689,8 @@ class OutputParser():
             'delta', 'a', 'gndot_rho', 'gauss_sigma', 'gauss_sigma_best'
         ]
         energy = [
-            'gndot_v0', 'etrial', 'eshift', 'pop_err', 
+            'gndot_v0', 'etrial', 'eshift', 'pop_err',
+            'U_onsite_den', 'U_onsite_pairden',
             'tot_E_all', 'tot_E_1st', 'tot_E', 'tot_E_err',
             'pot_E_all', 'pot_E', 'pot_E_err', 
             'int_E_all', 'int_E', 'int_E_err', 
@@ -920,7 +931,58 @@ class OutputParser():
             p_edge_pol = np.nan
         
         return p_edge_pol
- 
+        
+    def _U_onsite(self, den_t, radius=None):
+        """
+        Onsite Coulomb Interaction (Hubbard U)
+        Estimation from electron density
+        
+        U = \int n(x,y) * V(x,y) * dx * dy
+        V(x',y') = \int n(x,y) / sqrt((x-x')^2 + (y - y')^2) * dx * dy
+        where n is the electron density.
+        """
+        try:
+            # Radius of spin values considered around potential centers 
+            if radius is None:
+                radius = self.a / 2
+            
+            # dx and dy for integration
+            dx = den_t[1,0,0] - den_t[0,0,0]
+            dy = den_t[0,1,1] - den_t[0,0,1]
+            
+            # Loop over potential centers
+            U_onsite = 0
+            for i in range(self.pos.shape[0]):
+                dist = np.sqrt(
+                    (self.pos[i,0] - den_t[:,:,0])**2 \
+                    + (self.pos[i,1] - den_t[:,:,1])**2
+                )
+                indices = dist < radius
+                x = den_t[indices,0]
+                y = den_t[indices,1]
+                n = den_t[indices,2]
+                
+                # Meshgrid for all combinations of points
+                ind = np.arange(x.shape[0])
+                ind1, ind2 = np.meshgrid(ind, ind)
+                
+                # Select non-diagonal elements
+                mask = ~np.eye(ind1.shape[0], dtype=bool)
+                ind1 = ind1[mask]
+                ind2 = ind2[mask]
+                
+                # U_onsite for a single site omitting dx, dy
+                r = np.sqrt((x[ind1] - x[ind2])**2 + (y[ind1] - y[ind2])**2)
+                U_onsite += (n[ind1] * n[ind2] / r).sum()
+
+            # Average value of U_onsite over all sites
+            U_onsite *= dx * dy * dx * dy / self.pos.shape[0]
+            
+        except (IndexError, AttributeError, TypeError, ValueError):
+            U_onsite = np.nan
+        
+        return U_onsite
+    
     #-----------------------------------#
     # Class utilities:                  #
     # _1st_best, _feature, _feature_all #        

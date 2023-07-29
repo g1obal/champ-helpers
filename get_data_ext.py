@@ -3,7 +3,7 @@ CHAMP Data Reader and Extrapolated Estimator Calculator
 
 Author: Gokhan Oztarhan
 Created date: 24/06/2022
-Last modified: 15/03/2023
+Last modified: 29/07/2023
 """
 
 import sys
@@ -136,6 +136,7 @@ def get_parser_vmc(run_dir):
         a=A,
         calculate_ss_corr=False,
         calculate_edge_pol=False,
+        calculate_U_onsite=False,
     )
     parser_vmc.parse()
     
@@ -174,6 +175,7 @@ def get_parser_dmc(run_dir):
             a=A,
             calculate_ss_corr=False,
             calculate_edge_pol=False,
+            calculate_U_onsite=False,
         )  
         parser_dmc.parse()
 
@@ -220,6 +222,9 @@ def den2d_ext(parser_vmc, parser_dmc):
             
         # Calculate edge polarization for density
         parser_dmc.edge_pol_den = parser_dmc._edge_pol(parser_dmc.den2d_s)
+        
+        # Calculate U_onsite for density
+        parser_dmc.U_onsite_den = parser_dmc._U_onsite(parser_dmc.den2d_t)
     
     except (TypeError, AttributeError) as err:
         print('%s in den2d_ext.' %type(err).__name__)
@@ -228,6 +233,7 @@ def den2d_ext(parser_vmc, parser_dmc):
         parser_dmc.den2d_nelec_calc = np.nan
         parser_dmc.ss_corr_den = np.nan
         parser_dmc.edge_pol_den = np.nan
+        parser_dmc.U_onsite_den = np.nan
     
     return parser_dmc
 
@@ -283,6 +289,10 @@ def pairden_ext(parser_vmc, parser_dmc):
             
         # Calculate edge polarization for pair density
         parser_dmc.edge_pol_pairden = parser_dmc._edge_pol(parser_dmc.pairden_s)
+        
+        # Calculate U_onsite for pair density
+        parser_dmc.U_onsite_pairden = \
+            parser_dmc._U_onsite(parser_dmc.pairden_t)
 
     except (TypeError, AttributeError) as err:
         print('%s in pairden_ext.' %type(err).__name__)
@@ -296,6 +306,7 @@ def pairden_ext(parser_vmc, parser_dmc):
         parser_dmc.pairden_s = np.nan
         parser_dmc.ss_corr_pairden = np.nan
         parser_dmc.edge_pol_pairden = np.nan
+        parser_dmc.U_onsite_pairden = np.nan
         
     return parser_dmc
 
