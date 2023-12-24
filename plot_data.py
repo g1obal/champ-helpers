@@ -3,7 +3,7 @@ Plot data
 
 Author: Gokhan Oztarhan
 Created date: 12/10/2021
-Last modified: 06/02/2023
+Last modified: 24/12/2023
 """
 
 import os
@@ -339,7 +339,7 @@ def plot(
         color = style['color']
         legend = LEGEND.get(groupname, groupname)
         if isinstance(legend, tuple):
-            legend = ', '.join(legend).replace('_', '\_')
+            legend = ', '.join(str(lgn) for lgn in legend).replace('_', '\_')
         
         x = get_feature(df, xfeature, xtype)
         y = get_feature(df, yfeature, ytype)

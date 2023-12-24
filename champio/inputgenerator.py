@@ -3,7 +3,7 @@ Input Generator class
 
 Author: Gokhan Oztarhan
 Created date: 18/06/2019
-Last modified: 15/05/2023
+Last modified: 24/12/2023
 """
 
 from os import urandom
@@ -110,10 +110,8 @@ class InputGenerator():
         self.irn = 'auto'
         
         # [run]
-        # adjust nblk to increase MC steps since nstep is nstep per nblk
-        # adjust nstep to decrease tcorr
         self.nstep = 100 # number of steps per block
-        self.nblk = 50
+        self.nblk = 15
         self.nblkeq = 5
         
         # [dmc]
@@ -139,11 +137,13 @@ class InputGenerator():
         self.opt_mode = 0 # 0: both, 1: only width, 2: only jastrow
         self.opt_constraint = 1
         self.nopt_iter = 30
+        self.nblk_max = 100 # maximum number of blocks 
+                            # which can be increased during the optimization
         self.add_diag = 1e-4 # CHAMP uses abs(add_diag)
                              # negative sign for fixed add_diag
                              # positive sign for optimization of add_diag
-        self.p_var = 0.2 # 0: energy, 1:variance
-        self.tol_energy = 1e-8 # energy tolerance to finish optimization
+        self.p_var = 0.1 # 0: energy, 1:variance
+        self.tol_energy = 1e-12 # energy tolerance to finish optimization
         self.iopt = '00002' # last digit 2 is newton, 
                             # 01002 also a good choice, 
                             # 31101 is linear (bad choice)
@@ -290,9 +290,7 @@ class InputGenerator():
             self.nctype = 2
             self.iwtype[self.ind_edge] = 2
         
-    def set_opt(self):      
-        self.nblk_max = self.nblk 
-        
+    def set_opt(self):
         if self.opt_constraint:
             self.nparmo_3 = -1
         else:

@@ -3,7 +3,7 @@ CHAMP Plot Optimization Steps
 
 Author: Gokhan Oztarhan
 Created date: 10/06/2021
-Last modified: 23/11/2022
+Last modified: 24/12/2023
 """
 
 import os
@@ -20,7 +20,8 @@ from matplotlib.ticker import LinearLocator, FixedLocator, MaxNLocator
 from champio.outputparser import OutputParser
 
 
-GROUPBY = 'rho'
+GROUPBY = ['rho'] # None for no groupby, list of strings for groupby
+FILTER = None # None for no filter, list of strings for filter
 to_SI = True
 
 TOT_E = True
@@ -38,19 +39,32 @@ FONTSIZE_LEGEND = 10
 ROOT_DIR = '.'
 OUTPUT_FILE_NAME = 'output_file'
 PLOT_DIR = 'data_plots_opt'
+if GROUPBY is not None:
+    PLOT_DIR = '_'.join([PLOT_DIR] + GROUPBY)
+if FILTER is not None:
+    PLOT_DIR = '_'.join([PLOT_DIR] + FILTER)
     
 # Matching directories 
 PATH = {}
 for root, dirs, files in sorted(os.walk(ROOT_DIR)):
     if OUTPUT_FILE_NAME in files:
         run_dir = os.path.split(root)[-1]
+        if FILTER is not None:
+            if not all([s in run_dir for s in FILTER]):
+                continue
         if GROUPBY is not None:
-            for s in run_dir.split('_'):
-                if GROUPBY in s:
-                    if s in PATH:
-                        PATH[s].append(root)
-                    else:
-                        PATH[s] = [root]
+            run_dir_split = run_dir.split('_')
+            s = []
+            for group in GROUPBY:
+                ind = [i for i, s in enumerate(run_dir_split) if group in s][0]
+                s.append(run_dir_split[ind])
+            s = '_'.join(s)
+            if FILTER is not None:
+                s = '_'.join([s] + FILTER)
+            if s in PATH:
+                PATH[s].append(root)
+            else:
+                PATH[s] = [root]
         else:
             if 'all' in PATH:
                 PATH['all'].append(root)

@@ -5,7 +5,7 @@ Generating inputs for CHAMP program.
 
 Author: Gokhan Oztarhan
 Created date: 09/06/2019
-Last modified: 15/05/2023
+Last modified: 24/12/2023
 """
 
 import os
@@ -87,8 +87,8 @@ CONFIG = {
     'irn': 'auto', # 'auto': automatically set random seed using os.urandom
 
     # [run]
-    'nstep': 100, # number of steps per block, adjust nstep to decrease tcorr
-    'nblk': 50,
+    'nstep': 100, # number of steps per block
+    'nblk': 15,
     'nblkeq': 5,
 
     # [dmc]
@@ -114,11 +114,12 @@ CONFIG = {
     'opt_mode': 0, # 0: both, 1: only width, 2: only jastrow
     'opt_constraint': 1,
     'nopt_iter': 30,
+    'nblk_max': 100, # max. number of blocks which can be increased during opt.
     'add_diag': 1e-4, # CHAMP uses abs(add_diag)
                       # negative sign for fixed add_diag
                       # positive sign for optimization of add_diag
-    'p_var': 0.2, # 0: energy, 1:variance
-    'tol_energy': 1e-8, # energy tolerance to finish optimization
+    'p_var': 0.1, # 0: energy, 1:variance
+    'tol_energy': 1e-12, # energy tolerance to finish optimization
     'iopt': '00002', # last digit 2 is newton, 
                      # 01002 also a good choice, 
                      # 31101 is linear (bad choice)

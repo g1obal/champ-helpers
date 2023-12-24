@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 29/07/2023
+Last modified: 24/12/2023
 """
 
 import os
@@ -64,6 +64,7 @@ class OutputParser():
         self.opt_type = None
         self.etrial = np.nan
         self.eshift = np.nan
+        self.gauss_width_max = np.nan
         self.gauss_sigma_best = np.nan
         self.ss_corr_den = np.nan
         self.ss_corr_pairden = np.nan
@@ -107,6 +108,7 @@ class OutputParser():
         self.n_block_eq = np.nan
         self.n_block = np.nan
         self.n_steps = np.nan
+        self.n_block_max = np.nan
         self.tot_cpu_time = None
 
         # Variables declared until this line
@@ -264,12 +266,14 @@ class OutputParser():
         self.scalek = _feature('scalek(1),a21=', data, -2, float)
         
         self.n_cpu = _feature('processors', data, -2, int)
-        
+
         string = 'nopt_iter,nblk_max,add_diag(1),p_var,tol_energy='
         self.nopt_iter = _feature(string, data, 1, int)
         self.add_diag = _feature(string, data, 3, float, replace=['D','E'])
         self.p_var = _feature(string, data, 4, float, replace=['D','E'])
         if self.nopt_iter > 0:
+            self.n_block_max = _feature(string, data, 2, int)
+            self.gauss_width_max = _feature('GAUSS_WIDTH_MAX=', data, 1, float)
             self._opt_type()
         
         self.n_block_eq = _feature('no. of blocks before eq. =', data, -1, int)
