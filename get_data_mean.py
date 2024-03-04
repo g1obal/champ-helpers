@@ -5,7 +5,7 @@ Calculate the mean of mpi2 runs with different random seeds.
 
 Author: Gokhan Oztarhan
 Created date: 04/07/2022
-Last modified: 29/07/2023
+Last modified: 04/03/2024
 """
 
 import sys
@@ -137,7 +137,6 @@ def get_data_mean():
             parser_mean = deepcopy(parser_list[-1])
             for _features in FEATURES:
                 parser_mean = get_mean(*_features, parser_list, parser_mean)
-            parser_mean._ratio_int_kin_dmc()
             parser_mean = set_ss_corrs(parser_mean)
             parser_mean = get_time_mean(parser_list, parser_mean)
             

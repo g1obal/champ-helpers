@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 24/12/2023
+Last modified: 04/03/2024
 """
 
 import os
@@ -79,7 +79,6 @@ class OutputParser():
         self.stdev_1st = np.nan
         self.stdev = np.nan
         self.stdev_err = np.nan
-        self.ratio_int_kin = np.nan
         self.pot_E = np.nan
         self.pot_E_err = np.nan
         self.int_E = np.nan
@@ -390,9 +389,6 @@ class OutputParser():
         self.acceptance_1st, self.acceptance = _1st_best(
             self.acceptance_all, float
         )
-        
-        # ratio_int_kin
-        self._ratio_int_kin_vmc()
             
     def _output_info_dmc(self):
         """
@@ -467,9 +463,6 @@ class OutputParser():
         self.acceptance = _feature(
             'No/frac. of node crossings,acceptance=', data_dmc, -1, float
         )
-        
-        # ratio_int_kin
-        self._ratio_int_kin_dmc()
         
         # n_walkers_last
         self.n_walkers_last = _feature(
@@ -604,27 +597,6 @@ class OutputParser():
             line = data[ind_data].split()
             self.pos[i,0], self.pos[i,1] = line[-2], line[-1]
             i += 1
-            
-    def _ratio_int_kin_vmc(self):
-        try:
-            self.ratio_int_kin_all = self.int_E_all / self.jf_kin_E_all
-            self.ratio_int_kin = self.ratio_int_kin_all[-1]
-        except (IndexError, AttributeError, TypeError, ValueError):
-            try:
-                self.ratio_int_kin_all = self.int_E_all / self.pb_kin_E_all
-                self.ratio_int_kin = self.ratio_int_kin_all[-1]
-            except (IndexError, AttributeError, TypeError, ValueError):
-                self.ratio_int_kin_all = np.nan
-                self.ratio_int_kin = np.nan
-                
-    def _ratio_int_kin_dmc(self):
-        try:
-            self.ratio_int_kin = self.int_E / self.jf_kin_E
-        except (IndexError, AttributeError, TypeError, ValueError):
-            try:
-                self.ratio_int_kin = self.int_E / self.pb_kin_E
-            except (IndexError, AttributeError, TypeError, ValueError):
-                self.ratio_int_kin = np.nan
     
     def _opt_step_best(self):
         try:

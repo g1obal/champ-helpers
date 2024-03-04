@@ -5,7 +5,7 @@ Calculate the ensemble averages of extrapolated data.
 
 Author: Gokhan Oztarhan
 Created date: 02/08/2022
-Last modified: 29/07/2023
+Last modified: 04/03/2024
 """
 
 import sys
@@ -156,7 +156,6 @@ def get_data_ens():
                     parser_mean = get_mean(
                         *_features, beta, shift, parser_list, parser_mean
                     )
-                parser_mean._ratio_int_kin_dmc()
                 parser_mean = set_ss_corrs(parser_mean)
                 parser_mean = get_time_mean(
                     beta, shift, parser_list, parser_mean

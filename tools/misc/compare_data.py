@@ -1,7 +1,7 @@
 """
 Author: Gokhan Oztarhan
 Created date: 20/11/2022
-Last modified: 21/03/2023
+Last modified: 04/03/2024
 """
 
 import numpy as np
@@ -22,7 +22,7 @@ cols = [
     'etrial', 'eshift', 'gauss_sigma_best', 
     'ss_corr_den', 'ss_corr_pairden', 'edge_pol_den', 'edge_pol_pairden',
     'tot_E_1st', 'tot_E', 'tot_E_err', 'pop_err', 
-    'stdev_1st', 'stdev', 'stdev_err', 'ratio_int_kin', 
+    'stdev_1st', 'stdev', 'stdev_err', 
     'pot_E', 'pot_E_err', 'int_E', 'int_E_err', 
     'jf_kin_E', 'jf_kin_E_err', 'pb_kin_E', 'pb_kin_E_err', 
     'acceptance_1st', 'acceptance', 'delta', 'Tcorr_1st', 'Tcorr',
