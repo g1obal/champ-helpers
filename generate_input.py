@@ -5,7 +5,7 @@ Generating inputs for CHAMP program.
 
 Author: Gokhan Oztarhan
 Created date: 09/06/2019
-Last modified: 24/12/2023
+Last modified: 24/05/2024
 """
 
 import os
@@ -46,13 +46,13 @@ CONFIG = {
     'lunit': 'nm',
 
     # [potential]
-    'gndot_v0': -25.28,
+    'gndot_v0': -20,
     'gndot_rho': 20,
     'gndot_s': 1.40, # unitless
     'gndot_k': 0, # unit: [ENERGY] / [LENGTH]^2
 
     # [basis]
-    'gauss_sigma': 10.97, # width guess for Gaussian basis
+    'gauss_sigma': 12, # width guess for Gaussian basis
 
     # [lattice]
     'a': 50.0,
@@ -67,7 +67,7 @@ CONFIG = {
                    # 4: nanoribbon
 
     # [electron]
-    'total_charge': None, # set total number of electrons, nelec
+    'total_charge': 0, # set total number of electrons, nelec
                           # None or 0 for charge neutral system
     'Sz': None, # total spin; to calculate the number of up and down electrons
                 # None to arrange nup and ndn according to Lieb's theorem
@@ -84,23 +84,25 @@ CONFIG = {
                        # >0: overwrites spin_order
 
     # [random seed champ]
-    'irn': 'auto', # 'auto': automatically set random seed using os.urandom
+    'irn': 'auto', # irn: a string of 16 digit integer
+                   # 'auto': automatically set random seed using os.urandom
 
     # [run]
     'nstep': 100, # number of steps per block
-    'nblk': 15,
-    'nblkeq': 5,
+    'nblk': 10,
+    'nblkeq': 3,
 
     # [dmc]
     'etrial': 0.1,
-    'n_walkers': 25,
+    'n_walkers': 5,
     'tau': 0.1,
     
     # [jastrow]
     'scalek': 0.2, # 0.2 is default
     'nctype_of_edges': 1, # 1: same iwtype for all dots
                           # 2: dots at the edges have different iwtype
-                          #    (corners not included)
+    'nctype2_include_corners': 1, # 0: do not include corner sites
+                                  # 1: include corner sites
     
     # [optional champ]
     'ifixe': 0, #  0: do not write 2d density, 
@@ -111,18 +113,18 @@ CONFIG = {
     'xfix_angle': 60, # fixed electron symmetry, default is 60
     
     # [opt]
-    'opt_mode': 0, # 0: both, 1: only width, 2: only jastrow
-    'opt_constraint': 1,
-    'nopt_iter': 30,
-    'nblk_max': 100, # max. number of blocks which can be increased during opt.
+    'opt_mode': 0, # 0: all, 1: width+pos, 2: width+jastrow, 3: pos+jastrow
+                   # 4: only pos, 5: only width, 6: only jastrow
+    'opt_constraint': 0,
+    'nopt_iter': 20,
+    'nblk_max': 25, # max. number of blocks which can be increased during opt.
     'add_diag': 1e-4, # CHAMP uses abs(add_diag)
                       # negative sign for fixed add_diag
                       # positive sign for optimization of add_diag
     'p_var': 0.1, # 0: energy, 1:variance
     'tol_energy': 1e-12, # energy tolerance to finish optimization
     'iopt': '00002', # last digit 2 is newton, 
-                     # 01002 also a good choice, 
-                     # 31101 is linear (bad choice)
+                     # 01002 also a good choice, 31101 is linear (bad choice)
     'ipr_opt': -2, # -2: minimal output, 2: maximum output
 }
 
@@ -139,10 +141,7 @@ def generate_input():
     logger.info(string)  
     
     # Initialize InputGenerator
-    inputgenerator = InputGenerator()
-    
-    # Change configuration
-    inputgenerator.config(CONFIG)
+    inputgenerator = InputGenerator(CONFIG)
     
     # Set all variables for input file
     inputgenerator.set()
@@ -178,7 +177,7 @@ def generate_input_multiple():
     print(string, end='')  
     
     # Set dynamical variables
-    total_charge = None
+    total_charge = 0
     Sz = None
     spin_order = 'AFM'
     spin_order_direction = 1
@@ -188,45 +187,30 @@ def generate_input_multiple():
                      # >0: overwrites spin_order
 
     gndot_v0_listoflist = [
-        [-38.48],
         [-32.82],
         [-29.35],
         [-27.01],
-        [-25.28], 
-        [-22.39], 
-        [-21.13],
-        [-20.43],
-        [-18.94], 
-        [-15.51], 
+        [-25.28],
+        [-22.39],
     ]
-    gndot_rho_list = [10, 12.5, 15, 17.5, 20, 25, 27, 28, 30, 35]
+    gndot_rho_list = [12.5, 15, 17.5, 20, 25]
     gndot_s = 1.40 # unitless
     
     # sigma guess for Gaussian basis
     gauss_sigma_list = [
-        [7.35],
         [8.35],
         [9.27],
         [10.13],
         [10.97],
         [13.11],
-        [14.15],
-        [14.82],
-        [15.93],
-        [18.28],
     ]
 
     # np.linspace(1.3e-4, 6.19e-4, 10) for rho20    
     gndot_k_list = [
-        [0.0], 
-        [0.0], 
-        [0.0], 
-        [0.0], 
-        [0.0], 
-        [0.0],  
-        [0.0],  
-        [0.0],  
-        [0.0],  
+        [0.0],
+        [0.0],
+        [0.0],
+        [0.0],
         [0.0],
     ]
     
@@ -236,6 +220,8 @@ def generate_input_multiple():
         'v0',
         'gsigma',
         'k',
+        'total-charge',
+        'Sz',
         'nctype-edge',
         'info',
     ] 
@@ -265,6 +251,11 @@ def generate_input_multiple():
                         'orb_dot_coef': orb_dot_coef,
                     }
                     
+                    inputgenerator = InputGenerator(CONFIG)
+                    inputgenerator.__dict__.update(var_dict_dynamic)
+                    inputgenerator.set()
+                    Sz_calc = 0.5 * (inputgenerator.nup - inputgenerator.ndn)
+                    
                     run_dir = ''
                     if 'rho' in run_dir_naming_elements:
                         run_dir += 'rho%s' %gndot_rho_list[i] + '_'
@@ -276,6 +267,10 @@ def generate_input_multiple():
                         run_dir += 'gsigma%s' %gauss_sigma + '_'
                     if 'k' in run_dir_naming_elements:
                         run_dir += 'k%.5e' %gndot_k + '_'
+                    if 'total-charge' in run_dir_naming_elements:
+                        run_dir += 'total-charge%s' %total_charge + '_'
+                    if 'Sz' in run_dir_naming_elements:
+                        run_dir += 'Sz%.1f' %Sz_calc + '_'
                     if 'nctype-edge' in run_dir_naming_elements:
                         run_dir += \
                             'nctype-edge%i' %CONFIG['nctype_of_edges'] + '_'
@@ -304,16 +299,9 @@ def generate_input_multiple():
                             sys.exit('info is wrong: %s' \
                                 %os.path.join(root_dir, run_dir))        
                     
-                    inputgenerator = InputGenerator()
-                    inputgenerator.config(CONFIG)
-                    inputgenerator.config(var_dict_dynamic)
-                    
                     inputgenerator.champ_input_file_name = os.path.join(
                        root_dir, run_dir, inputgenerator.champ_input_file_name
                     )
-                    
-                    inputgenerator.set()
-                    
                     inputgenerator.write() 
  
     # End of program

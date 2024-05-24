@@ -6,7 +6,7 @@ Updates optimized parameters using output file.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 21/03/2023
+Last modified: 24/05/2024
 """
 
 import os
@@ -250,17 +250,37 @@ class InputEditor():
             info_str = ' '.join(line[5:])
             self.data[ind] = generate_line(settings_str, info_str)
             
-    def edit_opt_mode(self, opt_mode):
+    def edit_opt_mode(self, nbasis, constraint, opt_mode):
         if opt_mode is not None:
             if opt_mode == 0:
                 self._nparm_jastrow(True)
-                self._nparm_gauss_width(True)
+                self._nparm_gauss_width(nbasis, constraint, True)
+                self._nparm_pos(nbasis, True)
             elif opt_mode == 1:
                 self._nparm_jastrow(False)
-                self._nparm_gauss_width(True)
+                self._nparm_gauss_width(nbasis, constraint, True)
+                self._nparm_pos(nbasis, True)
             elif opt_mode == 2:
                 self._nparm_jastrow(True)
-                self._nparm_gauss_width(False)
+                self._nparm_gauss_width(nbasis, constraint, True)
+                self._nparm_pos(nbasis, False)
+            elif opt_mode == 3:
+                self._nparm_jastrow(True)
+                self._nparm_gauss_width(nbasis, constraint, False)
+                self._nparm_pos(nbasis, True)
+            elif opt_mode == 4:
+                self._nparm_jastrow(False)
+                self._nparm_gauss_width(nbasis, constraint, False)
+                self._nparm_pos(nbasis, True)
+            elif opt_mode == 5:
+                self._nparm_jastrow(False)
+                self._nparm_gauss_width(nbasis, constraint, True)
+                self._nparm_pos(nbasis, False)
+            elif opt_mode == 6:
+                self._nparm_jastrow(True)
+                self._nparm_gauss_width(nbasis, constraint, False)
+                self._nparm_pos(nbasis, False)
+            
             self._nparm()
                 
     def _nparm_jastrow(self, optimize):
@@ -281,15 +301,34 @@ class InputEditor():
         info_str = ' '.join(line[11:])
         self.data[ind] = generate_line(settings_str, info_str)  
         
-    def _nparm_gauss_width(self, optimize):
+    def _nparm_gauss_width(self, nbasis, constraint, optimize):
         string = 'nparml,nparma,nparmb,nparmc,nparmf,nparmcsf,nparms,nparmg'
         ind, line = get_lines(string, self.data, first_occurance=True)
         line = line.split()
     
         if optimize:
-            line[10] = '%i' %(-1)
+            if constraint:
+                line[10] = '%i' %(-1)
+            else:
+                line[10] = '%i' %nbasis
         else:
             line[10] = '%i' %(0)
+        
+        settings_str = ' '.join(line[:8]) + '   ' +  ' '.join(line[8:11])
+        info_str = ' '.join(line[11:])
+        self.data[ind] = generate_line(settings_str, info_str)
+        
+    def _nparm_pos(self, nbasis, optimize):
+        string = 'nparml,nparma,nparmb,nparmc,nparmf,nparmcsf,nparms,nparmg'
+        ind, line = get_lines(string, self.data, first_occurance=True)
+        line = line.split()
+    
+        if optimize:
+            line[8] = '%i' %nbasis
+            line[9] = '%i' %nbasis
+        else:
+            line[8] = '%i' %(0)
+            line[9] = '%i' %(0)
         
         settings_str = ' '.join(line[:8]) + '   ' +  ' '.join(line[8:11])
         info_str = ' '.join(line[11:])
@@ -311,7 +350,20 @@ class InputEditor():
         settings_str = ' '.join(line[:8])
         info_str = ' '.join(line[8:])
         self.data[ind] = generate_line(settings_str, info_str)  
-        
+
+    def update_pos(self, new_params):
+        if new_params is not None:
+            string = '* Determinantal section'
+            ind, line = get_lines(string, self.data, first_occurance=True)
+            
+            self.data[ind + 3] = new_params[0]
+            self.data[ind + 4] = new_params[1]
+            
+            print('[InputEditor] update_pos: best_wf_found = %s' \
+                %new_params[-1])
+        else:
+            print('[InputEditor] update_pos: new_params = None')
+
     def update_gauss_width(self, new_params):
         if new_params is not None:
             string = '* Determinantal section'

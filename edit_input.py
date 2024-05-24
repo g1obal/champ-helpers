@@ -5,7 +5,7 @@ Edits currently present inputs using InputEditor.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 29/07/2023
+Last modified: 24/05/2024
 """
 
 import os
@@ -19,11 +19,11 @@ from champio.inputeditor import InputEditor
 
 IRN = 'auto' # random seed
 ETRIAL = 'auto'
-NSTEP = 100
-NBLK = 10
-NBLKEQ = 2
+NSTEP = 1000
+NBLK = 100
+NBLKEQ = 5
 N_WALKERS = 5
-NCONF_NEW = 0 # save n_conf_new final walkers per cpu
+NCONF_NEW = 100 # save n_conf_new final walkers per cpu
 ISITE = 1 # 0: read walkers from file, 1: generate walkers in sites.f90
 DELTA = 'auto'
 TAU = 0.1
@@ -32,8 +32,10 @@ XMAX = None
 NOPT_ITER = 0
 ADD_DIAG = None
 P_VAR = None
-OPT_MODE = 0 # 0: both, 1: only width, 2: only jastrow
+OPT_MODE = None # 0: all, 1: width+pos, 2: width+jastrow, 3: pos+jastrow
+                # 4: only pos, 5: only width, 6: only jastrow
 
+UPDATE_POS = True
 UPDATE_GAUSS_WIDTH = True
 UPDATE_JASTROW = True
 
@@ -89,11 +91,29 @@ def edit_input():
             editor.edit_nopt_iter(NOPT_ITER)
             editor.edit_add_diag(ADD_DIAG)
             editor.edit_p_var(P_VAR)
-            editor.edit_opt_mode(OPT_MODE)
+            editor.edit_opt_mode(parser.nbasis, parser.constraint, OPT_MODE)
             
-            if UPDATE_GAUSS_WIDTH:
+            pos, width, jast = False, False, False
+            if parser.opt_type == 'all':
+                pos, width, jast = True, True, True
+            elif parser.opt_type == 'gwidth+pos':
+                pos, width, jast = True, True, False
+            elif parser.opt_type == 'gwidth+jastrow':
+                pos, width, jast = False, True, True
+            elif parser.opt_type == 'pos+jastrow':
+                pos, width, jast = True, False, True
+            elif parser.opt_type == 'pos':
+                pos, width, jast = True, False, False
+            elif parser.opt_type == 'gwidth':
+                pos, width, jast = False, True, False
+            elif parser.opt_type == 'jastrow':
+                pos, width, jast = False, False, True
+
+            if UPDATE_POS and pos:
+                editor.update_pos(parser.opt_pos())
+            if UPDATE_GAUSS_WIDTH and width:
                 editor.update_gauss_width(parser.opt_gauss_width())
-            if UPDATE_JASTROW:
+            if UPDATE_JASTROW and jast:
                 editor.update_jastrow(parser.opt_jastrow())
             
             if GENERATE_MC_CONFIGS:

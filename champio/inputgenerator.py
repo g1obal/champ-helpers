@@ -3,7 +3,7 @@ Input Generator class
 
 Author: Gokhan Oztarhan
 Created date: 18/06/2019
-Last modified: 24/12/2023
+Last modified: 24/05/2024
 """
 
 from os import urandom
@@ -46,110 +46,7 @@ class InputGenerator():
     ]
     _DELTA_HIGH = [2.89073666, 4.2907438]   
 
-    def __init__(self):
-        # [file]
-        self.champ_input_file_name = 'input_file'
-        
-        # [title]
-        self.info = None # optional additional info
-        
-        # [au]
-        self.m_r = 0.067 # Electron mass ratio, m_eff / m_e
-        self.kappa = 12.4  # Dielectric constant, varepsilon / varepsilon_0
-        
-        # [units]
-        self.eunit = 'meV'
-        self.lunit = 'nm'
-        
-        # [potential]
-        self.gndot_v0 = -25.28
-        self.gndot_rho = 20
-        self.gndot_s = 1.40 # unitless
-        self.gndot_k = 0 # unit: [ENERGY] / [LENGTH]^2
-        
-        # [basis]
-        self.gauss_sigma = 10.97 # width guess for Gaussian basis
-        
-        # [lattice]
-        self.a = 50
-        self.n_side = 4
-        self.width = 4 # for nanoribbon
-        self.bc = 'xy' # for nanoribbon
-        self.lat_type = 'honeycomb'
-        self.flk_type = 1 # 0: hexagonal_zigzag, 
-                          # 1: hexagonal_armchair, 
-                          # 2: triangular_zigzag, 
-                          # 3: triangular_armchair, 
-                          # 4: nanoribbon
-        
-        # [electron]
-        self.total_charge = None # set total number of electrons, nelec
-                                 # None or 0 for charge neutral system
-        self.Sz = None # total spin;
-                       # to calculate the number of up and down electrons
-                       # None to arrange nup and ndn according to Lieb's theorem
-        self.spin_order = 'AFM' # electrons are located in a spin order
-                                # AFM: antiferromagnetic, FM: ferromagnetic
-        self.spin_order_direction = 1 # the direction in which electrons are 
-                                      # located
-                                      # 0: add electrons from outside to inside, 
-                                      #    additional electrons from inside to 
-                                      #    outside.
-                                      # 1: add electrons from inside to outside, 
-                                      #    additional electrons from outside to 
-                                      #    inside.
-        
-        # [orbital]
-        # orb_dot_coef, >0: overwrites spin_order
-        # 0: gauss, 1: orbitals read from orb_dot_coef file 
-        self.orb_dot_coef = 0
-        
-        # [random seed champ]
-        # irn: a string of 16 digit integer
-        #   'auto': automatically set random seed using os.urandom
-        self.irn = 'auto'
-        
-        # [run]
-        self.nstep = 100 # number of steps per block
-        self.nblk = 15
-        self.nblkeq = 5
-        
-        # [dmc]
-        self.etrial = 0.1
-        self.n_walkers = 25
-        self.tau = 0.1
-        
-        # [jastrow]
-        self.scalek = 0.2 # 0.2 is default
-        self.nctype_of_edges = 1 # 1: same iwtype for all dots
-                                 # 2: dots at the edges have different iwtype
-                                 #    (corners not included)
-        
-        # [optional champ]
-        self.ifixe = 0 #  0: do not write 2d density, 
-                       # -1: write out 2d density
-                       # -3: write out full pair density and 2d density
-        self.xfix_pos = None # fix electron position, ex: [0.1, 0.4]
-                             # None to find automatically
-        self.xfix_angle = 60 # fix electron symmetry, default is 60
-        
-        # [opt]
-        self.opt_mode = 0 # 0: both, 1: only width, 2: only jastrow
-        self.opt_constraint = 1
-        self.nopt_iter = 30
-        self.nblk_max = 100 # maximum number of blocks 
-                            # which can be increased during the optimization
-        self.add_diag = 1e-4 # CHAMP uses abs(add_diag)
-                             # negative sign for fixed add_diag
-                             # positive sign for optimization of add_diag
-        self.p_var = 0.1 # 0: energy, 1:variance
-        self.tol_energy = 1e-12 # energy tolerance to finish optimization
-        self.iopt = '00002' # last digit 2 is newton, 
-                            # 01002 also a good choice, 
-                            # 31101 is linear (bad choice)
-        self.ipr_opt = -2 # -2: minimal output, 2: maximum output
-
-    def config(self, config_dict):
+    def __init__(self, config_dict):
         self.__dict__.update(config_dict) 
         
     def write(self):
@@ -255,10 +152,7 @@ class InputGenerator():
         
         self.nbasis = self.ncent
         
-        if self.orb_dot_coef:
-            self.norb = self.nelec
-        else:
-            self.norb = self.nbasis
+        self.norb = self.nelec
         
         self.znuc = float(self.nelec) / self.ncent
         
@@ -279,10 +173,8 @@ class InputGenerator():
             counts = counts[ind_sorted]
             self.ind_edge = np.where(counts < 3)[0]
             
-            # Drop corner sites from edge indices for triangular zigzag flake
-            include_corners = False
-            
-            if not include_corners:
+            # Drop corner sites from edge indices
+            if not self.nctype2_include_corners:
                 dist = np.sqrt((self.pos[self.ind_edge,:]**2).sum(axis=1))
                 self.ind_edge = self.ind_edge[dist < dist.max() - self.a_au / 8]
             
@@ -290,12 +182,7 @@ class InputGenerator():
             self.nctype = 2
             self.iwtype[self.ind_edge] = 2
         
-    def set_opt(self):
-        if self.opt_constraint:
-            self.nparmo_3 = -1
-        else:
-            self.nparmo_3 = self.nbasis
-        
+    def set_opt(self):      
         self.nparml = 0
         self.nparma = 4
         self.nparmb = 6
@@ -304,14 +191,36 @@ class InputGenerator():
         self.nparmcsf = 0
         self.nparms = 0
         self.nparmg = 0
-        self.nparmo_1 = 0
-        self.nparmo_2 = 0
-            
+        self.nparmo_1 = self.nbasis
+        self.nparmo_2 = self.nbasis
+        if self.opt_constraint:
+            self.nparmo_3 = -1
+        else:
+            self.nparmo_3 = self.nbasis
+        
         if self.opt_mode == 1:
             self.nparma = 0
             self.nparmb = 0
             self.nparmc = 0
         elif self.opt_mode == 2:
+            self.nparmo_1 = 0
+            self.nparmo_2 = 0
+        elif self.opt_mode == 3:
+            self.nparmo_3 = 0
+        elif self.opt_mode == 4:
+            self.nparma = 0
+            self.nparmb = 0
+            self.nparmc = 0
+            self.nparmo_3 = 0
+        elif self.opt_mode == 5:
+            self.nparma = 0
+            self.nparmb = 0
+            self.nparmc = 0
+            self.nparmo_1 = 0
+            self.nparmo_2 = 0
+        elif self.opt_mode == 6:
+            self.nparmo_1 = 0
+            self.nparmo_2 = 0
             self.nparmo_3 = 0
         
         nparm = self.nparml + self.nparmb + self.nparmcsf \

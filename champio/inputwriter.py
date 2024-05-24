@@ -3,7 +3,7 @@ Writer module for InputGenerator
 
 Author: Gokhan Oztarhan
 Created date: 11/06/2019
-Last modified: 15/05/2023
+Last modified: 23/05/2024
 """
 
 import time
@@ -332,16 +332,22 @@ def inputwriter(inputgenerator):
         + '(nparmo(i),i=1,notype) - notype is related to ibasis'
     input_str += generate_line(settings_str, info_str)    
     
-    settings_str = ' '
+    s1 = ''
+    for i in range(1, inputgenerator.nbasis+1):
+        s1 += '{:d} '.format(i)
+    settings_str = s1
     info_str = '(iwo(iparm),iparm=1,nparmo(1))'
     input_str += generate_line(settings_str, info_str)     
     
-    settings_str = ' '
+    s1 = ''
+    for i in range(1, inputgenerator.nbasis+1):
+        s1 += '{:d} '.format(i)
+    settings_str = s1
     info_str = '(iwo(iparm),iparm=1,nparmo(2))'
     input_str += generate_line(settings_str, info_str)  
 
     s1 = ''
-    for i in range(1,np.abs(inputgenerator.nparmo_3)+1):
+    for i in range(1, inputgenerator.nbasis+1):
         s1 += '{:d} '.format(i)
     settings_str = s1
     info_str = '(iwo(iparm),iparm=1,nparmo(3))'
@@ -433,11 +439,8 @@ def inputwriter(inputgenerator):
     input_str += generate_line(settings_str, info_str)  
 
     settings_str = ''
-    if inputgenerator.opt_constraint:
-        for i in range(2,inputgenerator.nbasis + 1):
-            settings_str += '{:d} 1 '.format(i) 
-    else:
-        settings_str += ' '
+    for i in range(2,inputgenerator.nbasis + 1):
+        settings_str += '{:d} 1 '.format(i) 
     info_str = '((orb_constraints(1,i,j),j=1,2),i=1,norb_constrants(3))'
     input_str += generate_line(settings_str, info_str)      
 

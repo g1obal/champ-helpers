@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 04/03/2024
+Last modified: 24/05/2024
 """
 
 import os
@@ -59,6 +59,7 @@ class OutputParser():
         self.gauss_sigma = np.nan
         self.scalek = np.nan
         self.nopt_iter = np.nan
+        self.constraint = None
         self.add_diag = np.nan
         self.p_var = np.nan
         self.opt_type = None
@@ -124,6 +125,9 @@ class OutputParser():
             self.kappa = kappa
         if a is not None:
             self.a = a
+            
+        # Boolean for optimization constraint on gauss width
+        self.constraint = None
         
         # Positions of the electrons or centers
         self.ncent = np.nan
@@ -568,6 +572,7 @@ class OutputParser():
         data = self.data
         
         jastrow = False
+        pos = False
         gwidth = False
         
         string = 'nparm,nparml,nparmj,nparmcsf,nparms,nparmg,nparme='
@@ -576,16 +581,33 @@ class OutputParser():
             jastrow = True
             
         string = 'orbital parameters varied='
-        nparmo = _feature_all(string, data, -1, int)[2]
-        if nparmo > 0:
+        nparmo_1, nparmo_2, nparmo_3 = _feature_all(string, data, -1, int)
+        if ~np.isnan(nparmo_1) and ~np.isnan(nparmo_2):
+            pos = True
+        if ~np.isnan(nparmo_3):
             gwidth = True
-            
-        if jastrow and gwidth:
-            self.opt_type = 'both'
-        elif jastrow:
-            self.opt_type = 'jastrow'
+            string = 'Constraint imposed in optimization ' \
+                'over orbital parameters.'
+            ind, line = get_lines(string, data)
+            if line:
+                self.constraint = True
+            else:
+                self.constraint = False
+
+        if jastrow and pos and gwidth:
+            self.opt_type = 'all'
+        elif pos and gwidth:
+            self.opt_type = 'gwidth+pos'
+        elif jastrow and gwidth:
+            self.opt_type = 'gwidth+jastrow'
+        elif jastrow and pos:
+            self.opt_type = 'pos+jastrow'
+        elif pos:
+            self.opt_type = 'pos'
         elif gwidth:
             self.opt_type = 'gwidth'
+        elif jastrow:
+            self.opt_type = 'jastrow'
             
     def _positions(self):
         data = self.data
@@ -696,7 +718,43 @@ class OutputParser():
             one_unit_SI_l = auconverter.length_to_SI(1.0, lunit) 
             self.gndot_k *= one_unit_SI_e / one_unit_SI_l**2    
         except err:
-            self.gndot_k = np.nan        
+            self.gndot_k = np.nan    
+            
+    def opt_pos(self):
+        """
+        Get optimized parameters as string
+        """
+        if self.data is not None:
+            string = '(floating_gauss_x_pos_best(it,i),i=1,nbasis)'
+            ind, line = get_lines(string, self.data[-50:])
+            best_wf_found = True
+            
+            if line:
+                line_x = [line[-1]]
+                line_y = [self.data[-50:][ind[-1] + 1]]
+                best_wf_found = True
+            
+            else:
+                string = '(floating_gauss_x_pos_new(it,i),i=1,nbasis)'
+                ind, line_x = get_lines(string, self.data)
+                
+                string = '(floating_gauss_y_pos_new(it,i),i=1,nbasis)'
+                ind, line_y = get_lines(string, self.data)
+                
+                best_wf_found = False
+
+                if self.ind_best_wf >= 0 and line_x and line_y:
+                    line_x = [line_x[self.ind_best_wf]]
+                    line_y = [line_y[self.ind_best_wf]]
+                else:
+                    line_x, line_y = [], []
+
+            if line_x and line_y:
+                return line_x[-1], line_y[-1], best_wf_found
+            else:
+                return None
+        else:
+            return None
                 
     def opt_gauss_width(self):
         """
@@ -712,7 +770,7 @@ class OutputParser():
                 ind, line = get_lines(string, self.data)
                 best_wf_found = False
 
-                if self.ind_best_wf >= 0:
+                if self.ind_best_wf >= 0 and line:
                     line = [line[self.ind_best_wf]]
                 else:
                     line = []
@@ -746,7 +804,7 @@ class OutputParser():
                 ind, line_c = get_lines(string_c, self.data)
                 best_wf_found = False
                 
-                if self.ind_best_wf >= 0:
+                if self.ind_best_wf >= 0 and line_a and line_b and line_c:
                     line_a = [line_a[self.ind_best_wf]]
                     line_b = [line_b[self.ind_best_wf]]
                     line_c = [line_c[self.ind_best_wf]]

@@ -27,23 +27,14 @@ package is located in the same directory with the corresponding script (or
 included in PYTHONPATH environment variable), and the environment meets the 
 library/package requirements.
 
-If the package is installed, *champio* package does not have to be in the same
-directory with the scripts that are used.
-
 Download or clone this repository.
 ```
 $ git clone https://github.com/g1obal/champ-helpers.git
 ```
 
-*Optional:* Install using pip.
-```
-$ cd champ-helpers
-$ pip install .
-```
-
 ## Usage
 The scripts located in the root directory are usable, and there are useful
-slurm scripts in *tools* directory.
+scripts in *tools* directory.
 
 For .py files:
 ```
