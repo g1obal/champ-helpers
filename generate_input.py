@@ -5,7 +5,7 @@ Generating inputs for CHAMP program.
 
 Author: Gokhan Oztarhan
 Created date: 09/06/2019
-Last modified: 24/05/2024
+Last modified: 25/05/2024
 """
 
 import os
@@ -53,6 +53,11 @@ CONFIG = {
 
     # [basis]
     'gauss_sigma': 12, # width guess for Gaussian basis
+    'distort_positions': 0, # 0: disable, 1: enable distorting positions
+    'distort_coef': 0.25, # distortion of basis func. positions is
+                        # a * distort_coef * random_number
+    'distort_far_from_center': 1, # 0: randomly distort from given position
+                   # 1: distort positions far away from the center of the system
 
     # [lattice]
     'a': 50.0,

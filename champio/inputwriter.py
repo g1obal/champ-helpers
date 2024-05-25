@@ -3,11 +3,12 @@ Writer module for InputGenerator
 
 Author: Gokhan Oztarhan
 Created date: 11/06/2019
-Last modified: 23/05/2024
+Last modified: 25/05/2024
 """
 
 import time
 import logging
+from copy import deepcopy
 
 import numpy as np
 
@@ -148,18 +149,32 @@ def inputwriter(inputgenerator):
     s3 = '{:d}'.format(inputgenerator.norb) # norb
     settings_str = ' '.join([s1,s2,s3]) 
     info_str = 'ndet,nbasis,norb'
-    input_str += generate_line(settings_str, info_str)    
+    input_str += generate_line(settings_str, info_str)
+    
+    basis_pos = deepcopy(inputgenerator.pos)
+    if inputgenerator.distort_positions:
+        r_distort = np.random.rand(inputgenerator.nbasis) \
+            * inputgenerator.a_au * inputgenerator.distort_coef
+            
+        if inputgenerator.distort_far_from_center:
+            angle_distort = \
+                np.arctan2(inputgenerator.pos[:,1], inputgenerator.pos[:,0])
+        else:
+            angle_distort = np.random.rand(inputgenerator.nbasis) * np.pi
+        
+        basis_pos[:,0] += r_distort * np.cos(angle_distort)
+        basis_pos[:,1] += r_distort * np.sin(angle_distort)
     
     s1 = ''
     for i in range(inputgenerator.nbasis):
-        s1 += '{: .12f} '.format(inputgenerator.pos[i,0])
+        s1 += '{: .12f} '.format(basis_pos[i,0])
     settings_str = s1
     info_str = '(floating_gauss_x_pos(it,i),i=1,nbasis)'
     input_str += generate_line(settings_str, info_str)
     
     s1 = ''
     for i in range(inputgenerator.nbasis):
-        s1 += '{: .12f} '.format(inputgenerator.pos[i,1])
+        s1 += '{: .12f} '.format(basis_pos[i,1])
     settings_str = s1
     info_str = '(floating_gauss_y_pos(it,i),i=1,nbasis)'
     input_str += generate_line(settings_str, info_str)
