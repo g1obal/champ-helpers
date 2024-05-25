@@ -50,21 +50,24 @@ DRAW_TITLE = False
 
 # Set LEGEND_ORDER to None for plotting all groups regardless of order,
 # as well as the groups that are not in this list
+LEGEND_ORDER = [
+    'tb',
+    'mfh_U_t',
+    'mfh_U_2t',
+    'mfh_U_3t',
+    'mfh_U_5t',
+    'mfh_U_20t',
+    'mfh_U_100t',
+    'dft',
+    'gauss',
+    'T = 4 K',
+]
 if len(GROUPBY_COLS) > 1:
     LEGEND_ORDER = None
 else:
-    LEGEND_ORDER = [
-        'tb',
-        'mfh_U_t',
-        'mfh_U_2t',
-        'mfh_U_3t',
-        'mfh_U_5t',
-        'mfh_U_20t',
-        'mfh_U_100t',
-        'dft',
-        'gauss',
-        'T = 4 K',
-    ]
+    if GROUPBY_COLS[0] != 'info':
+        LEGEND_ORDER = None
+
 LEGEND = {
     'tb': 'Tight-binding',
     'mfh_U_t': 'Hubbard $U = t$',
