@@ -3,14 +3,14 @@ Plot Density
 
 Author: Gokhan Oztarhan
 Created date: 18/01/2022
-Last modified: 29/07/2023
+Last modified: 25/05/2024
 """
 
 import os
 import sys
 import time
 import pickle
-from multiprocessing import Pool
+import multiprocessing
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,12 +23,11 @@ from champio.outputparser import OutputParser
 
 N_CPU = 4
 
-# None: read from args, 0: normal, 1: mean, 2: extrapolated, 3: ensemble
-RUN_TYPE = None 
-
 DEN2D = True
 PAIRDEN = True
 PAIRDEN_ALL = True
+
+DRAW_SITE_POS = False
 
 DRAW_TICKS = True
 DRAW_TITLE = True
@@ -61,8 +60,6 @@ OUTPUT_FILE_NAME = 'output_file'
 DATA_MEAN_FILE_NAME = 'mean_file.pkl'
 DATA_EXT_FILE_NAME = 'ext_file.pkl'
 DATA_ENS_FILE_NAME = 'ens_file.pkl'
-PKL_FILE_NAME = None
-PKL_INFO = None
 
 plt.ioff()
 plt.rcParams.update({
@@ -76,27 +73,29 @@ plt.rcParams.update({
 def plot_density():
     tic = time.time()
     
+    multiprocessing.set_start_method('spawn')
+    
     if not os.path.exists(PLOT_DIR):
         os.mkdir(PLOT_DIR)
-
-    if not os.path.exists(PAIRDEN_ALL_DIR):
-        os.mkdir(PAIRDEN_ALL_DIR)
     
-    if RUN_TYPE == 0:
-        search_fname = OUTPUT_FILE_NAME
-    else:
-        search_fname = PKL_FILE_NAME
-    paths = [
-        root for root, dirs, files in sorted(os.walk(ROOT_DIR)) \
-        if not dirs and search_fname in files
-    ]
-    paths.sort()
+    if PAIRDEN_ALL:
+        if not os.path.exists(PAIRDEN_ALL_DIR):
+            os.mkdir(PAIRDEN_ALL_DIR)
+
+    paths = []
+    for root, dirs, files in sorted(os.walk(ROOT_DIR)):
+        if not dirs:
+            for f in files:
+                if f in [OUTPUT_FILE_NAME, DATA_MEAN_FILE_NAME, 
+                DATA_EXT_FILE_NAME, DATA_ENS_FILE_NAME]:
+                    paths.append([root, f])
+
     chunks = get_chunks(len(paths), N_CPU)
 
     # Divide chunks to processes one by one (chunksize=1)
     # since I already calculated and distributed chunks 
     # to processes (in order to preserve list order).
-    myPool = Pool()
+    myPool = multiprocessing.Pool()
     result = myPool.map(
         parse_and_plot, [paths[i:j] for [i, j] in chunks], chunksize=1
     )
@@ -105,13 +104,13 @@ def plot_density():
     print("Execution time, plot_density = %.3f s" %(toc-tic))
 
 
-def parse_and_plot(paths):    
-    for root in paths:
+def parse_and_plot(paths):
+    for root, out_file in paths:
         try:
-            if RUN_TYPE == 0:
+            if out_file == OUTPUT_FILE_NAME:
                 # Parse output file for required variables
                 outparser = OutputParser(
-                    OUTPUT_FILE_NAME, path=root,
+                    out_file, path=root,
                     parse_density=True, 
                     calculate_ss_corr=False,
                     calculate_edge_pol=False,
@@ -119,12 +118,19 @@ def parse_and_plot(paths):
                 )
                 outparser.parse()
             else:
+                if out_file == DATA_MEAN_FILE_NAME:
+                    pkl_info = 'dmc2mean'
+                elif out_file == DATA_EXT_FILE_NAME:
+                    pkl_info = 'extrapolated'
+                elif out_file == DATA_ENS_FILE_NAME:
+                    pkl_info = 'ensemble'
+                
                 # Load data
-                with open(os.path.join(root, PKL_FILE_NAME), 'rb') as pkl_file:
+                with open(os.path.join(root, out_file), 'rb') as pkl_file:
                     pkl_data = pickle.load(pkl_file)
                 outparser = OutputParser()
                 outparser.__dict__.update(pkl_data)
-                outparser.run_mode = PKL_INFO
+                outparser.run_mode = pkl_info
         except Exception as err:
             print('%s, parse/load data: %s' %(type(err).__name__, root))
         
@@ -139,6 +145,7 @@ def parse_and_plot(paths):
                     outparser.den2d_t, 
                     outparser.den2d_s, 
                     outparser.den2d_nelec_calc,
+                    outparser.pos,
                     root,
                     outparser.run_mode
                 )
@@ -196,7 +203,7 @@ def parse_and_plot(paths):
                 print('%s, pairden_all: %s' %(type(err).__name__, root))
 
 
-def plot_den2d(den2d_t, den2d_s, nelec_calc, path, run_mode):
+def plot_den2d(den2d_t, den2d_s, nelec_calc, pos, path, run_mode):
     # Initialize figure
     fig = plt.figure(figsize=plt.figaspect(0.5))
     
@@ -219,6 +226,12 @@ def plot_den2d(den2d_t, den2d_s, nelec_calc, path, run_mode):
     # Plot surfaces
     for i, _args in enumerate(args):
         ax[i], surf[i] = _ax_plot(*_args)
+        if DRAW_SITE_POS:
+            ax[i].scatter(
+                pos[:,0], pos[:,1],
+                marker='x', color='white',
+                s=70, linewidth=2
+            )
     
     # Colorbars and fonts
     for i, _ax in enumerate(ax):
@@ -441,41 +454,6 @@ def get_chunks(n_data, n_cpu):
 
 
 if __name__ == '__main__': 
-    if RUN_TYPE is None:
-        args = sys.argv
-        if len(args) > 1:
-            if args[1] == 'normal':
-                RUN_TYPE = 0
-            elif args[1] == 'mean':
-                RUN_TYPE = 1
-            elif args[1] == 'ext':
-                RUN_TYPE = 2
-            elif args[1] == 'ens':
-                RUN_TYPE = 3
-            else:
-                print('Wrong RUN_TYPE')
-                sys.exit()
-        else:
-            print(
-                'usage: python3 plot_density.py [run_type]\n\n' \
-                'run_type:\n' \
-                '  normal      parse data from all directories\n' \
-                '  mean        load data from mean pickle files\n' \
-                '  ext         load data from extrapolated pickle files\n' \
-                '  ens         load data from ensemble pickle files'
-            )
-            sys.exit()
-
-    if RUN_TYPE == 1:
-        PKL_FILE_NAME = DATA_MEAN_FILE_NAME
-        PKL_INFO = 'dmc2mean'
-    elif RUN_TYPE == 2:
-        PKL_FILE_NAME = DATA_EXT_FILE_NAME
-        PKL_INFO = 'extrapolated'
-    elif RUN_TYPE == 3:
-        PKL_FILE_NAME = DATA_ENS_FILE_NAME
-        PKL_INFO = 'ensemble'
-
     plot_density()
 
 

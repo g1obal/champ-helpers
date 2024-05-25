@@ -3,7 +3,7 @@ CHAMP Plot Optimization Steps
 
 Author: Gokhan Oztarhan
 Created date: 10/06/2021
-Last modified: 24/12/2023
+Last modified: 25/05/2024
 """
 
 import os
@@ -25,9 +25,9 @@ FILTER = None # None for no filter, list of strings for filter
 to_SI = True
 
 TOT_E = True
-STDEV = False
-TCORR = False
-ACCEPTANCE = False
+STDEV = True
+TCORR = True
+ACCEPTANCE = True
 GAUSS_SIGMA = False
 
 DPI = 200

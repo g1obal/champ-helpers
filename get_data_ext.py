@@ -18,8 +18,8 @@ import pandas as pd
 from champio.outputparser import OutputParser
 
 
-VMC_ROOT_DIR = '../vmc/den'
-DMC_ROOT_DIR = '../dmc/mpi2'
+VMC_ROOT_DIR = '../den'
+DMC_ROOT_DIR = '../dmc'
 OUTPUT_FILE_NAME = 'output_file'
 
 MPI2_MEAN = False
