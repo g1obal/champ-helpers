@@ -1,25 +1,18 @@
 """
 Author: Gokhan Oztarhan
 Created date: 20/11/2022
-Last modified: 04/03/2024
+Last modified: 25/05/2024
 """
 
 import numpy as np
 import pandas as pd
 
-df_new = pd.read_csv('data_new.csv', header=0, index_col=0)
-df_old = pd.read_csv('data_old.csv', header=0, index_col=0)
-
-sort_cols = ['run_dir', 'flk_type', 'info']
-
-df_new = df_new.sort_values(sort_cols,  ignore_index=True)
-df_old = df_old.sort_values(sort_cols,  ignore_index=True)
-
 cols = [
-    'm_r', 'kappa', 'a', 'nelec', 'nup', 'ndn', 'norb', 'nbasis', 
-    'gndot_v0', 'gndot_rho', 'gndot_s', 'gndot_k', 'gauss_sigma', 
+    'm_r', 'kappa', 'a', 'nelec', 'nup', 'ndn', 'norb', 'nbasis', 'ncent',
+    'nctype', 'gndot_v0', 'gndot_rho', 'gndot_s', 'gndot_k', 'gauss_sigma', 
     'scalek', 'nopt_iter', 'add_diag', 'p_var', 
-    'etrial', 'eshift', 'gauss_sigma_best', 
+    'etrial', 'eshift', 'gauss_sigma_best',
+    'nelec_inside', 'uni_den_mean', 'uni_den_std',
     'ss_corr_den', 'ss_corr_pairden', 'edge_pol_den', 'edge_pol_pairden',
     'tot_E_1st', 'tot_E', 'tot_E_err', 'pop_err', 
     'stdev_1st', 'stdev', 'stdev_err', 
@@ -31,6 +24,14 @@ cols = [
     'n_walkers',
 ]
 
+df_new = pd.read_csv('data_SI_new.csv', header=0, index_col=0)
+df_old = pd.read_csv('data_SI_old.csv', header=0, index_col=0)
+
+sort_cols = ['run_dir', 'flk_type', 'info']
+
+df_new = df_new.sort_values(sort_cols,  ignore_index=True)
+df_old = df_old.sort_values(sort_cols,  ignore_index=True)
+
 new = df_new[cols].to_numpy()
 old = df_old[cols].to_numpy()
 
@@ -40,3 +41,5 @@ old[np.isnan(old)] = 0
 diff = np.sqrt((new - old)**2).sum()
 
 print(diff)
+
+

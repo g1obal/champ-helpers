@@ -3,7 +3,7 @@ CHAMP Data Reader and Extrapolated Estimator Calculator
 
 Author: Gokhan Oztarhan
 Created date: 24/06/2022
-Last modified: 29/07/2023
+Last modified: 25/05/2024
 """
 
 import sys
@@ -137,6 +137,7 @@ def get_parser_vmc(run_dir):
         calculate_ss_corr=False,
         calculate_edge_pol=False,
         calculate_U_onsite=False,
+        calculate_nelec_inside_uni=False,
     )
     parser_vmc.parse()
     
@@ -176,6 +177,7 @@ def get_parser_dmc(run_dir):
             calculate_ss_corr=False,
             calculate_edge_pol=False,
             calculate_U_onsite=False,
+            calculate_nelec_inside_uni=False,
         )  
         parser_dmc.parse()
 
@@ -225,6 +227,12 @@ def den2d_ext(parser_vmc, parser_dmc):
         
         # Calculate U_onsite for density
         parser_dmc.U_onsite_den = parser_dmc._U_onsite(parser_dmc.den2d_t)
+        
+        # Calculate nelec_inside and density uniformity for density
+        parser_dmc.nelec_inside, \
+        parser_dmc.uni_den_mean, \
+        parser_dmc.uni_den_std = \
+            parser_dmc._nelec_inside_uni(parser_dmc.den2d_t)
     
     except (TypeError, AttributeError) as err:
         print('%s in den2d_ext.' %type(err).__name__)
@@ -234,6 +242,9 @@ def den2d_ext(parser_vmc, parser_dmc):
         parser_dmc.ss_corr_den = np.nan
         parser_dmc.edge_pol_den = np.nan
         parser_dmc.U_onsite_den = np.nan
+        parser_dmc.nelec_inside = np.nan
+        parser_dmc.uni_den_mean = np.nan
+        parser_dmc.uni_den_std = np.nan
     
     return parser_dmc
 

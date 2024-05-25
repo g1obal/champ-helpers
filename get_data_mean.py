@@ -5,7 +5,7 @@ Calculate the mean of mpi2 runs with different random seeds.
 
 Author: Gokhan Oztarhan
 Created date: 04/07/2022
-Last modified: 04/03/2024
+Last modified: 25/05/2024
 """
 
 import sys
@@ -265,6 +265,12 @@ def set_ss_corrs(parser_mean):
     
     # Calculate U_onsite for pair density
     parser_mean.U_onsite_pairden = parser_mean._U_onsite(parser_mean.pairden_t)
+    
+    # Calculate nelec_inside and density uniformity for density
+    parser_mean.nelec_inside, \
+    parser_mean.uni_den_mean, \
+    parser_mean.uni_den_std = \
+        parser_mean._nelec_inside_uni(parser_mean.den2d_t)
         
     return parser_mean
     

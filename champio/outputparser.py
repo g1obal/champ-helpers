@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 24/05/2024
+Last modified: 25/05/2024
 """
 
 import os
@@ -15,6 +15,7 @@ from sklearn.neighbors import NearestNeighbors
 
 from .auconverter import AUConverter
 from .densityparser import parse_den, parse_pairden
+from .potential import gndot as gndot_pot
 
 
 class OutputParser():
@@ -36,6 +37,7 @@ class OutputParser():
         calculate_ss_corr=True,
         calculate_edge_pol=True,
         calculate_U_onsite=True,
+        calculate_nelec_inside_uni=True,
     ):
         self.parent_path = None
         self.run_dir = None
@@ -52,6 +54,8 @@ class OutputParser():
         self.ndn = np.nan
         self.norb = np.nan
         self.nbasis = np.nan
+        self.ncent = np.nan
+        self.nctype = np.nan
         self.gndot_v0 = np.nan
         self.gndot_rho = np.nan
         self.gndot_s = np.nan
@@ -67,6 +71,9 @@ class OutputParser():
         self.eshift = np.nan
         self.gauss_width_max = np.nan
         self.gauss_sigma_best = np.nan
+        self.nelec_inside = np.nan
+        self.uni_den_mean = np.nan
+        self.uni_den_std = np.nan
         self.ss_corr_den = np.nan
         self.ss_corr_pairden = np.nan
         self.edge_pol_den = np.nan
@@ -163,6 +170,9 @@ class OutputParser():
         # Boolean for calculation of U onsite (Hubbard U)
         self.calculate_U_onsite = calculate_U_onsite
         
+        # Boolean for calculation of nelec_inside and density uniformity
+        self.calculate_nelec_inside_uni = calculate_nelec_inside_uni
+        
     def dataframe(self):
         data = {}
         for feature in self.features:
@@ -214,6 +224,10 @@ class OutputParser():
                 self.U_onsite_den = self._U_onsite(self.den2d_t)
                 self.U_onsite_pairden = self._U_onsite(self.pairden_t)
                 
+            if self.calculate_nelec_inside_uni:
+                self.nelec_inside, self.uni_den_mean, self.uni_den_std = \
+                    self._nelec_inside_uni(self.den2d_t)
+                
             self._cpu_time()
             
     def _data_corrupted(self):
@@ -245,6 +259,8 @@ class OutputParser():
         self.nup = _feature(string, data, -2, int)
         self.ndn = _feature(string, data, -1, int)
         
+        self.nctype = _feature('nctype,ncent =', data, -2, int)
+
         self.ncent = _feature('nctype,ncent =', data, -1, int)
         self._positions()
 
@@ -868,6 +884,49 @@ class OutputParser():
             )
         except Exception as err:
             self.pairden_parse_err = err
+
+    def _nelec_inside_uni(self, den_t, radius=None):
+        try:
+            # Radius of spin values considered around potential centers 
+            if radius is None:
+                radius = self.a / 2
+            
+            # dx and dy for integration
+            dx = den_t[1,0,0] - den_t[0,0,0]
+            dy = den_t[0,1,1] - den_t[0,0,1]
+
+            # electron densities around potential centers and gndot potential
+            dens = np.zeros(self.pos.shape[0])
+            zz = np.zeros((den_t.shape[0], den_t.shape[1]))
+            for i in range(self.pos.shape[0]):
+                dist = np.sqrt(
+                    (den_t[:,:,0] - self.pos[i,0])**2 \
+                    + (den_t[:,:,1] - self.pos[i,1])**2
+                )
+                dens[i] = den_t[dist < radius, 2].sum()
+                zz += gndot_pot(
+                    dist, self.gndot_v0, self.gndot_rho, self.gndot_s
+                )
+            
+            # Integral of densities around potential centers
+            dens *= dx * dy
+            
+            # Mean and std. of individual site integrals
+            uni_den_mean = dens.mean()
+            uni_den_std = dens.std()
+            
+            if self.gndot_v0 < 0:
+                mask = zz < 1e-8 * self.gndot_v0
+            else:
+                mask = zz > 1e-8 * self.gndot_v0
+            nelec_inside = den_t[mask,2].sum() * dx * dy
+            
+        except (IndexError, AttributeError, TypeError, ValueError):
+            nelec_inside = np.nan
+            uni_den_mean = np.nan
+            uni_den_std = np.nan
+            
+        return nelec_inside, uni_den_mean, uni_den_std
 
     def _ss_corr(self, den_t, den_s, radius=None):
         """
