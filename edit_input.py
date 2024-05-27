@@ -5,7 +5,7 @@ Edits currently present inputs using InputEditor.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 24/05/2024
+Last modified: 27/05/2024
 """
 
 import os
@@ -69,6 +69,7 @@ def edit_input():
                 calculate_ss_corr=False, 
                 calculate_edge_pol=False,
                 calculate_U_onsite=False,
+                calculate_nelec_inside_uni=False,
             )
             parser.parse()
             
@@ -114,7 +115,7 @@ def edit_input():
             if UPDATE_GAUSS_WIDTH and width:
                 editor.update_gauss_width(parser.opt_gauss_width())
             if UPDATE_JASTROW and jast:
-                editor.update_jastrow(parser.opt_jastrow())
+                editor.update_jastrow(parser.nctype, parser.opt_jastrow())
             
             if GENERATE_MC_CONFIGS:
                 editor.generate_mc_configs(

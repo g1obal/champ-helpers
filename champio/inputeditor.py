@@ -6,7 +6,7 @@ Updates optimized parameters using output file.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 24/05/2024
+Last modified: 27/05/2024
 """
 
 import os
@@ -376,14 +376,21 @@ class InputEditor():
         else:
             print('[InputEditor] update_gauss_width: new_params = None')
         
-    def update_jastrow(self, new_params):
+    def update_jastrow(self, nctype, new_params):
         if new_params is not None:
             string = '* Jastrow section'
             ind, line = get_lines(string, self.data, first_occurance=True)
             
-            self.data[ind + 5] = new_params[0]
-            self.data[ind + 6] = new_params[1]
-            self.data[ind + 7] = new_params[2]
+            if nctype == 1:
+                self.data[ind + 5] = new_params[0][0]
+                self.data[ind + 6] = new_params[1][0]
+                self.data[ind + 7] = new_params[2][0]
+            elif nctype == 2:
+                self.data[ind + 5] = new_params[0][0]
+                self.data[ind + 6] = new_params[0][1]
+                self.data[ind + 7] = new_params[1][0]
+                self.data[ind + 8] = new_params[2][0]
+                self.data[ind + 9] = new_params[2][1]
             
             print('[InputEditor] update_jastrow: best_wf_found = %s' \
                 %new_params[-1])

@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 25/05/2024
+Last modified: 27/05/2024
 """
 
 import os
@@ -821,14 +821,24 @@ class OutputParser():
                 best_wf_found = False
                 
                 if self.ind_best_wf >= 0 and line_a and line_b and line_c:
-                    line_a = [line_a[self.ind_best_wf]]
                     line_b = [line_b[self.ind_best_wf]]
-                    line_c = [line_c[self.ind_best_wf]]
+                    if self.nctype == 1:
+                        line_a = [line_a[self.ind_best_wf]]
+                        line_c = [line_c[self.ind_best_wf]]
+                    elif self.nctype == 2:
+                        line_a = [
+                            line_a[2 * self.ind_best_wf],
+                            line_a[2 * self.ind_best_wf + 1]
+                        ]
+                        line_c = [
+                            line_c[2 * self.ind_best_wf],
+                            line_c[2 * self.ind_best_wf + 1]
+                        ]
                 else:
                     line_a, line_b, line_c = [], [], []
             
             if line_a and line_b and line_c:
-                return line_a[-1], line_b[-1], line_c[-1], best_wf_found
+                return line_a, line_b, line_c, best_wf_found
             else:
                 return None     
         else:
