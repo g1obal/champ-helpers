@@ -3,7 +3,7 @@ CHAMP Density Parser
 
 Author: Gokhan Oztarhan
 Created date: 20/06/2022
-Last modified: 15/09/2022
+Last modified: 03/06/2024
 """
 
 import os
@@ -57,14 +57,19 @@ def parse_pairden(path, run_mode, nelec, nup, ndn):
     fname_pairden_uu = os.path.join(path, 'pairden_uu_' + run_mode)                    
     
     # Pair densities
-    pairden_dd = np.loadtxt(fname_pairden_dd, skiprows=1, dtype=float)
-    pairden_dt = np.loadtxt(fname_pairden_dt, skiprows=1, dtype=float)
-    pairden_du = np.loadtxt(fname_pairden_du, skiprows=1, dtype=float)
     pairden_ud = np.loadtxt(fname_pairden_ud, skiprows=1, dtype=float)
     pairden_ut = np.loadtxt(fname_pairden_ut, skiprows=1, dtype=float)
-    pairden_uu = np.loadtxt(fname_pairden_uu, skiprows=1, dtype=float)             
+    pairden_uu = np.loadtxt(fname_pairden_uu, skiprows=1, dtype=float)
+    try:
+        pairden_dd = np.loadtxt(fname_pairden_dd, skiprows=1, dtype=float)
+        pairden_dt = np.loadtxt(fname_pairden_dt, skiprows=1, dtype=float)
+        pairden_du = np.loadtxt(fname_pairden_du, skiprows=1, dtype=float)
+    except (OSError, IndexError, AttributeError, TypeError, ValueError):
+        pairden_dd = np.zeros(pairden_ut.shape)
+        pairden_dt = np.zeros(pairden_ut.shape)
+        pairden_du = np.zeros(pairden_ut.shape)         
     
-    with open(fname_pairden_dd, 'r') as f:
+    with open(fname_pairden_ut, 'r') as f:
         line = f.readline()
         xfix = [
             float(line.split()[-3]), 
@@ -73,11 +78,11 @@ def parse_pairden(path, run_mode, nelec, nup, ndn):
         ]
         
     # Parse and preprocess pair densities
-    xdim = np.unique(pairden_dd[:,0]).shape[0]
-    ydim = np.unique(pairden_dd[:,1]).shape[0]
+    xdim = np.unique(pairden_ut[:,0]).shape[0]
+    ydim = np.unique(pairden_ut[:,1]).shape[0]
 
-    xx = np.reshape(pairden_dd[:,0], (xdim,ydim))
-    yy = np.reshape(pairden_dd[:,1], (xdim,ydim))
+    xx = np.reshape(pairden_ut[:,0], (xdim,ydim))
+    yy = np.reshape(pairden_ut[:,1], (xdim,ydim))
     
     zz = np.reshape(pairden_dd[:,2], (xdim,ydim)) 
     pairden_dd = np.stack([xx, yy, zz], axis=2)

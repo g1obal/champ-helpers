@@ -3,7 +3,7 @@ Plot Density
 
 Author: Gokhan Oztarhan
 Created date: 18/01/2022
-Last modified: 25/05/2024
+Last modified: 03/06/2024
 """
 
 import os
@@ -39,13 +39,13 @@ DPI_DEN2D = 200
 FONTSIZE_XYLABEL_DEN2D = 14
 LABELSIZE_TICK_PARAMS_DEN2D = 10
 FONTSIZE_TITLE_DEN2D = 14
-FONTSIZE_INFO_DEN2D = 14
+FONTSIZE_INFO_DEN2D = 12
 
 DPI_PAIRDEN = 200
 FONTSIZE_XYLABEL_PAIRDEN = 14
 LABELSIZE_TICK_PARAMS_PAIRDEN = 10
 FONTSIZE_TITLE_PAIRDEN = 14
-FONTSIZE_INFO_PAIRDEN = 14
+FONTSIZE_INFO_PAIRDEN = 12
 
 DPI_PAIRDEN_ALL = 200
 LABELSIZE_TICK_PARAMS_PAIRDEN_ALL = 6
@@ -250,13 +250,13 @@ def plot_den2d(den2d_t, den2d_s, nelec_calc, pos, path, run_mode):
             _ax.set_title(args[i][-1], fontsize=FONTSIZE_TITLE_DEN2D)
         
     # Information ax
-    ax_info = fig.add_subplot(1,1,1, adjustable='box', aspect=1.0)
-    ax_info.clear()
-    ax_info.axis("off")
+    #ax_info = fig.add_subplot(1,1,1, adjustable='box', aspect=1.0)
+    #ax_info.clear()
+    #ax_info.axis("off")
     info_str = os.path.split(path)[-1].replace('_', '\_') + '\n' \
                + '[%s], nelec\_calc = %.2f' %(run_mode, nelec_calc)
-    ax_info.text(
-        0.5, 1.080, info_str, ha='center', fontsize=FONTSIZE_INFO_DEN2D
+    fig.text(
+        0.5, 0.90, info_str, ha='center', fontsize=FONTSIZE_INFO_DEN2D
     )
     
     # Add padding between subplots
@@ -323,14 +323,14 @@ def plot_pairden(pairden_t, pairden_s, xfix, path, run_mode):
             _ax.set_title(args[i][-1], fontsize=FONTSIZE_TITLE_PAIRDEN)
         
     # Information ax
-    ax_info = fig.add_subplot(1,1,1, adjustable='box', aspect=1.0)
-    ax_info.clear()
-    ax_info.axis("off")
+    #ax_info = fig.add_subplot(1,1,1, adjustable='box', aspect=1.0)
+    #ax_info.clear()
+    #ax_info.axis("off")
     info_str = os.path.split(path)[-1].replace('_', '\_') + '\n' \
                + '[%s], xfix = $(%.5f, %.5f), %.2f^{\\circ}$' \
                %(run_mode, xfix[0], xfix[1], xfix[2])
-    ax_info.text(
-        0.5, 1.080, info_str, ha='center', fontsize=FONTSIZE_INFO_PAIRDEN
+    fig.text(
+        0.5, 0.915, info_str, ha='center', fontsize=FONTSIZE_INFO_PAIRDEN
     )
     
     # Add padding between subplots
@@ -394,14 +394,14 @@ def plot_pairden_all(
             _ax.set_title(args[i][-1], fontsize=FONTSIZE_TITLE_PAIRDEN_ALL)
 
     # Information ax
-    ax_info = fig.add_subplot(1,1,1, adjustable='box', aspect=1.0)
-    ax_info.clear()
-    ax_info.axis("off")
+    #ax_info = fig.add_subplot(1,1,1, adjustable='box', aspect=1.0)
+    #ax_info.clear()
+    #ax_info.axis("off")
     info_str = os.path.split(path)[-1].replace('_', '\_') + '\n' \
                + '[%s], xfix = $(%.5f, %.5f), %.2f^{\\circ}$' \
                %(run_mode, xfix[0], xfix[1], xfix[2])
-    ax_info.text(
-        0.5, 1.080, info_str, ha='center', fontsize=FONTSIZE_INFO_PAIRDEN_ALL
+    fig.text(
+        0.5, 0.990, info_str, ha='center', fontsize=FONTSIZE_INFO_PAIRDEN_ALL
     )
     
     # Add padding between subplots
