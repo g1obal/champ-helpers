@@ -3,7 +3,7 @@ CHAMP Density Parser
 
 Author: Gokhan Oztarhan
 Created date: 20/06/2022
-Last modified: 03/06/2024
+Last modified: 26/03/2025
 """
 
 import os
@@ -121,31 +121,53 @@ def parse_pairden(path, run_mode, nelec, nup, ndn):
     # the noise in those pair density calculations will be boosted.
     # Thus, the end results will be completely dominated by noise.
     # That's why, we need to normalize (ud + du + uu + dd) and (dt + ut).
-    zz = pairden_ud[:,:,2] + pairden_du[:,:,2] \
-        + pairden_uu[:,:,2] + pairden_dd[:,:,2]
-    integral = np.trapz(np.trapz(zz, dx=dx, axis=0), dx=dy, axis=0)
-    multiplier = 2 * (nelec - 1) / integral
-    pairden_dd[:,:,2] = restore_normalization(pairden_dd[:,:,2], multiplier)
-    pairden_du[:,:,2] = restore_normalization(pairden_du[:,:,2], multiplier)
-    pairden_ud[:,:,2] = restore_normalization(pairden_ud[:,:,2], multiplier)
-    pairden_uu[:,:,2] = restore_normalization(pairden_uu[:,:,2], multiplier)
+    if nup == ndn:
+        zz = pairden_ud[:,:,2] + pairden_du[:,:,2] \
+            + pairden_uu[:,:,2] + pairden_dd[:,:,2]
+        integral = np.trapz(np.trapz(zz, dx=dx, axis=0), dx=dy, axis=0)
+        multiplier = 2 * (nelec - 1) / integral
+        pairden_dd[:,:,2] = restore_normalization(pairden_dd[:,:,2], multiplier)
+        pairden_du[:,:,2] = restore_normalization(pairden_du[:,:,2], multiplier)
+        pairden_ud[:,:,2] = restore_normalization(pairden_ud[:,:,2], multiplier)
+        pairden_uu[:,:,2] = restore_normalization(pairden_uu[:,:,2], multiplier)
+        
+        # Normalization of dt and ut
+        zz = pairden_dt[:,:,2] + pairden_ut[:,:,2]
+        integral = np.trapz(np.trapz(zz, dx=dx, axis=0), dx=dy, axis=0)
+        multiplier = 2 * (nelec - 1) / integral
+        pairden_dt[:,:,2] = restore_normalization(pairden_dt[:,:,2], multiplier)
+        pairden_ut[:,:,2] = restore_normalization(pairden_ut[:,:,2], multiplier)
+        
+        # Total Electron Density
+        zz = (pairden_dt[:,:,2] + pairden_ut[:,:,2]) / 2
+        pairden_t = np.stack([xx, yy, zz], axis=2)
+        
+        # Spin density
+        zz = pairden_uu[:,:,2] + pairden_dd[:,:,2] \
+             - (pairden_ud[:,:,2] + pairden_du[:,:,2])
+        zz /= 2
+        pairden_s = np.stack([xx, yy, zz], axis=2)
+    else:
+        zz = pairden_ud[:,:,2] + pairden_uu[:,:,2]
+        integral = np.trapz(np.trapz(zz, dx=dx, axis=0), dx=dy, axis=0)
+        multiplier = (nelec - 1) / integral
+        pairden_ud[:,:,2] = restore_normalization(pairden_ud[:,:,2], multiplier)
+        pairden_uu[:,:,2] = restore_normalization(pairden_uu[:,:,2], multiplier)
 
-    # Normalization of dt and ut
-    zz = pairden_dt[:,:,2] + pairden_ut[:,:,2]
-    integral = np.trapz(np.trapz(zz, dx=dx, axis=0), dx=dy, axis=0)
-    multiplier = 2 * (nelec - 1) / integral
-    pairden_dt[:,:,2] = restore_normalization(pairden_dt[:,:,2], multiplier)
-    pairden_ut[:,:,2] = restore_normalization(pairden_ut[:,:,2], multiplier)
-    
-    # Total Electron Density
-    zz = (pairden_dt[:,:,2] + pairden_ut[:,:,2]) / 2
-    pairden_t = np.stack([xx, yy, zz], axis=2)
-    
-    # Spin density
-    zz = pairden_ud[:,:,2] + pairden_du[:,:,2] \
-         - (pairden_uu[:,:,2] + pairden_dd[:,:,2])
-    zz /= 2
-    pairden_s = np.stack([xx, yy, zz], axis=2)
+        # Normalization of ut
+        zz = pairden_ut[:,:,2]
+        integral = np.trapz(np.trapz(zz, dx=dx, axis=0), dx=dy, axis=0)
+        multiplier = (nelec - 1) / integral
+        pairden_dt[:,:,2] = restore_normalization(pairden_dt[:,:,2], multiplier)
+        pairden_ut[:,:,2] = restore_normalization(pairden_ut[:,:,2], multiplier)
+        
+        # Total Electron Density
+        zz = pairden_ut[:,:,2]
+        pairden_t = np.stack([xx, yy, zz], axis=2)
+        
+        # Spin density
+        zz = pairden_uu[:,:,2] - pairden_ud[:,:,2]
+        pairden_s = np.stack([xx, yy, zz], axis=2)
 
     return [
         pairden_dd, pairden_dt, pairden_du,

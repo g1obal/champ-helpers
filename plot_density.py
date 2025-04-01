@@ -3,7 +3,7 @@ Plot Density
 
 Author: Gokhan Oztarhan
 Created date: 18/01/2022
-Last modified: 03/06/2024
+Last modified: 26/03/2025
 """
 
 import os
@@ -168,7 +168,9 @@ def parse_and_plot(paths):
                     outparser.pairden_s, 
                     outparser.pairden_xfix,
                     root,
-                    outparser.run_mode
+                    outparser.run_mode,
+                    outparser.nup,
+                    outparser.ndn
                 )
             
                 # Print info
@@ -271,7 +273,7 @@ def plot_den2d(den2d_t, den2d_s, nelec_calc, pos, path, run_mode):
     plt.close(fig)
  
 
-def plot_pairden(pairden_t, pairden_s, xfix, path, run_mode):
+def plot_pairden(pairden_t, pairden_s, xfix, path, run_mode, nup, ndn):
     # Initialize figure
     fig = plt.figure(figsize=plt.figaspect(0.5))
     
@@ -286,18 +288,25 @@ def plot_pairden(pairden_t, pairden_s, xfix, path, run_mode):
     surf.append(None)   
 
     # _ax_plot arguments
+    if nup == ndn:
+        title_t = '(ut + dt) / 2'
+        title_s = '[uu + dd - (ud + du)] / 2'
+    else:
+        title_t = 'ut'
+        title_s = 'uu - ud'
+    
     args = [
-        [ax[0], pairden_t, 'jet', '(ut + dt) / 2'],
-        [ax[1], pairden_s, 'seismic', '[ud + du - (uu + dd)] / 2'],
+        [ax[0], pairden_t, 'jet', title_t],
+        [ax[1], pairden_s, 'seismic', title_s],
     ]
     
     # Plot surfaces and mark fixed point
     for i, _args in enumerate(args):
         ax[i], surf[i] = _ax_plot(*_args)
         
-        if _args[-1] == '(ut + dt) / 2':
+        if _args[-1] == title_t:
             mark_color = 'white'
-        if _args[-1] == '[ud + du - (uu + dd)] / 2':
+        if _args[-1] == title_s:
             mark_color = 'black'
             
         ax[i].scatter(
@@ -425,7 +434,7 @@ def _ax_plot(ax, data, cmap, title):
     ylim = [yy.min().min(), yy.max().max()]
     zlim = [zz.min().min(), zz.max().max()]
     
-    if title == 'Spin Density' or title == '[ud + du - (uu + dd)] / 2':
+    if cmap == 'seismic':
         zmax = abs(zz).max().max()
         zlim = [-zmax, zmax]
 
