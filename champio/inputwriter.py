@@ -3,7 +3,7 @@ Writer module for InputGenerator
 
 Author: Gokhan Oztarhan
 Created date: 11/06/2019
-Last modified: 25/05/2024
+Last modified: 29/03/2026
 """
 
 import time
@@ -196,27 +196,36 @@ def inputwriter(inputgenerator):
     settings_str = ' '.join([s1,s2])
     info_str = '(iworbd(j,idet),j=1,nelec)'
     input_str += generate_line(settings_str, info_str)
-    
+
     input_str += '\n'
-    settings_str = '1'
+    settings_str = '%i' %inputgenerator.ncsf
     info_str = 'ncsf'
     input_str += generate_line(settings_str, info_str)
     
-    settings_str = '1.0'
+    settings_str = ''
+    for i in range(inputgenerator.ncsf):
+        settings_str += '1.0 '
     info_str = '(csf_coef(icsf),icsf=1,ncsf)'
     input_str += generate_line(settings_str, info_str)
     
-    settings_str = '1'
+    settings_str = ''
+    for i in range(inputgenerator.ncsf):
+        settings_str += '%i ' %inputgenerator.ndet_in_csf
     info_str = '(ndet_in_csf(icsf),icsf=1,ncsf)'
     input_str += generate_line(settings_str, info_str)
     
-    settings_str = '1'
-    info_str = '(iwcsf(idet_in_csf,1),idet_in_csf=1,ndet_in_csf(1))'
-    input_str += generate_line(settings_str, info_str)
-    
-    settings_str = '1.0'
-    info_str = '(cdet_csf(idet_in_csf,1),idet_in_csf=1,ndet_in_csf(1))'
-    input_str += generate_line(settings_str, info_str)
+    for i in range(inputgenerator.ncsf):
+        settings_str = ''
+        for j in range(inputgenerator.ndet_in_csf):
+            settings_str += '%i ' %(j + 1)
+        info_str = '(iwcsf(idet_in_csf,1),idet_in_csf=1,ndet_in_csf(1))'
+        input_str += generate_line(settings_str, info_str)
+        
+        settings_str = ''
+        for j in range(inputgenerator.ndet_in_csf):
+            settings_str += '1.0 '
+        info_str = '(cdet_csf(idet_in_csf,1),idet_in_csf=1,ndet_in_csf(1))'
+        input_str += generate_line(settings_str, info_str)
     
     input_str += '\n'
     
@@ -232,7 +241,7 @@ def inputwriter(inputgenerator):
     info_str = 'ijas,isc,nspin1,nspin2,nord,ifock'
     input_str += generate_line(settings_str, info_str)
     
-    settings_str = '6 6 5'
+    settings_str = '5 5 5'
     info_str = 'norda,nordb,nordc'
     input_str += generate_line(settings_str, info_str)
     

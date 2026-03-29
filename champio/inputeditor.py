@@ -6,7 +6,7 @@ Updates optimized parameters using output file.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 27/05/2024
+Last modified: 29/03/2026
 """
 
 import os
@@ -250,36 +250,53 @@ class InputEditor():
             info_str = ' '.join(line[5:])
             self.data[ind] = generate_line(settings_str, info_str)
             
-    def edit_opt_mode(self, nbasis, constraint, opt_mode):
+    def edit_opt_mode(self, nbasis, constraint, ncsf, opt_mode):
         if opt_mode is not None:
             if opt_mode == 0:
                 self._nparm_jastrow(True)
                 self._nparm_gauss_width(nbasis, constraint, True)
                 self._nparm_pos(nbasis, True)
+                self._nparm_csf(ncsf, False)
             elif opt_mode == 1:
                 self._nparm_jastrow(False)
                 self._nparm_gauss_width(nbasis, constraint, True)
                 self._nparm_pos(nbasis, True)
+                self._nparm_csf(ncsf, False)
             elif opt_mode == 2:
                 self._nparm_jastrow(True)
                 self._nparm_gauss_width(nbasis, constraint, True)
                 self._nparm_pos(nbasis, False)
+                self._nparm_csf(ncsf, False)
             elif opt_mode == 3:
                 self._nparm_jastrow(True)
                 self._nparm_gauss_width(nbasis, constraint, False)
                 self._nparm_pos(nbasis, True)
+                self._nparm_csf(ncsf, False)
             elif opt_mode == 4:
-                self._nparm_jastrow(False)
-                self._nparm_gauss_width(nbasis, constraint, False)
-                self._nparm_pos(nbasis, True)
-            elif opt_mode == 5:
-                self._nparm_jastrow(False)
-                self._nparm_gauss_width(nbasis, constraint, True)
-                self._nparm_pos(nbasis, False)
-            elif opt_mode == 6:
                 self._nparm_jastrow(True)
                 self._nparm_gauss_width(nbasis, constraint, False)
                 self._nparm_pos(nbasis, False)
+                self._nparm_csf(ncsf, True)
+            elif opt_mode == 5:
+                self._nparm_jastrow(False)
+                self._nparm_gauss_width(nbasis, constraint, False)
+                self._nparm_pos(nbasis, True)
+                self._nparm_csf(ncsf, False)
+            elif opt_mode == 6:
+                self._nparm_jastrow(False)
+                self._nparm_gauss_width(nbasis, constraint, True)
+                self._nparm_pos(nbasis, False)
+                self._nparm_csf(ncsf, False)
+            elif opt_mode == 7:
+                self._nparm_jastrow(True)
+                self._nparm_gauss_width(nbasis, constraint, False)
+                self._nparm_pos(nbasis, False)
+                self._nparm_csf(ncsf, False)
+            elif opt_mode == 8:
+                self._nparm_jastrow(False)
+                self._nparm_gauss_width(nbasis, constraint, False)
+                self._nparm_pos(nbasis, False)
+                self._nparm_csf(ncsf, True)
             
             self._nparm()
                 
@@ -290,7 +307,7 @@ class InputEditor():
     
         if optimize:
             line[1] = '%i' %(4)
-            line[2] = '%i' %(6)
+            line[2] = '%i' %(5)
             line[3] = '%i' %(15)
         else:
             line[1] = '%i' %(0)
@@ -299,7 +316,7 @@ class InputEditor():
         
         settings_str = ' '.join(line[:8]) + '   ' +  ' '.join(line[8:11])
         info_str = ' '.join(line[11:])
-        self.data[ind] = generate_line(settings_str, info_str)  
+        self.data[ind] = generate_line(settings_str, info_str)
         
     def _nparm_gauss_width(self, nbasis, constraint, optimize):
         string = 'nparml,nparma,nparmb,nparmc,nparmf,nparmcsf,nparms,nparmg'
@@ -332,7 +349,24 @@ class InputEditor():
         
         settings_str = ' '.join(line[:8]) + '   ' +  ' '.join(line[8:11])
         info_str = ' '.join(line[11:])
-        self.data[ind] = generate_line(settings_str, info_str) 
+        self.data[ind] = generate_line(settings_str, info_str)
+        
+    def _nparm_csf(self, ncsf, optimize):
+        string = 'nparml,nparma,nparmb,nparmc,nparmf,nparmcsf,nparms,nparmg'
+        ind, line = get_lines(string, self.data, first_occurance=True)
+        line = line.split()
+    
+        if optimize:
+            if ~np.isnan(ncsf):
+                line[5] = '%i' %(ncsf - 1)
+            else:
+                line[5] = '%i' %(0)
+        else:
+            line[5] = '%i' %(0)
+        
+        settings_str = ' '.join(line[:8]) + '   ' +  ' '.join(line[8:11])
+        info_str = ' '.join(line[11:])
+        self.data[ind] = generate_line(settings_str, info_str)
         
     def _nparm(self):
         string = 'nparml,nparma,nparmb,nparmc,nparmf,nparmcsf,nparms,nparmg'
@@ -396,6 +430,18 @@ class InputEditor():
                 %new_params[-1])
         else:
             print('[InputEditor] update_jastrow: new_params = None')
+
+    def update_csf(self, new_params):
+        if new_params is not None:
+            string = 'ncsf'
+            ind, line = get_lines(string, self.data, first_occurance=True)
+            
+            self.data[ind + 1] = new_params[0]
+            
+            print('[InputEditor] update_csf: best_wf_found = %s' \
+                %new_params[-1])
+        else:
+            print('[InputEditor] update_csf: new_params = None')
             
     def generate_mc_configs(self, root, files, n_mc_configs, pick_random):
         mc_configs = []

@@ -5,7 +5,7 @@ Edits currently present inputs using InputEditor.
 
 Author: Gokhan Oztarhan
 Created date: 30/01/2022
-Last modified: 27/05/2024
+Last modified: 29/03/2026
 """
 
 import os
@@ -32,12 +32,14 @@ XMAX = None
 NOPT_ITER = 0
 ADD_DIAG = None
 P_VAR = None
-OPT_MODE = None # 0: all, 1: width+pos, 2: width+jastrow, 3: pos+jastrow
-                # 4: only pos, 5: only width, 6: only jastrow
+OPT_MODE = None # 0: pos+gwidth+jastrow, 1: width+pos, 2: width+jastrow,
+                # 3: pos+jastrow, 4: csf+jastrow, 5: only pos, 6: only width,
+                # 7: only jastrow, 8: only csf
 
 UPDATE_POS = True
 UPDATE_GAUSS_WIDTH = True
 UPDATE_JASTROW = True
+UPDATE_CSF = True
 
 GENERATE_MC_CONFIGS = False
 MC_CONFIGS_PICK_RANDOM = False
@@ -92,23 +94,28 @@ def edit_input():
             editor.edit_nopt_iter(NOPT_ITER)
             editor.edit_add_diag(ADD_DIAG)
             editor.edit_p_var(P_VAR)
-            editor.edit_opt_mode(parser.nbasis, parser.constraint, OPT_MODE)
+            editor.edit_opt_mode(parser.nbasis, parser.constraint, \
+                parser.ncsf, OPT_MODE)
             
-            pos, width, jast = False, False, False
-            if parser.opt_type == 'all':
-                pos, width, jast = True, True, True
+            pos, width, jast, csf = False, False, False, False
+            if parser.opt_type == 'pos+gwidth+jastrow':
+                pos, width, jast, csf = True, True, True, False
             elif parser.opt_type == 'gwidth+pos':
-                pos, width, jast = True, True, False
+                pos, width, jast, csf = True, True, False, False
             elif parser.opt_type == 'gwidth+jastrow':
-                pos, width, jast = False, True, True
+                pos, width, jast, csf = False, True, True, False
             elif parser.opt_type == 'pos+jastrow':
-                pos, width, jast = True, False, True
+                pos, width, jast, csf = True, False, True, False
+            elif parser.opt_type == 'csf+jastrow':
+                pos, width, jast, csf = False, False, True, True
             elif parser.opt_type == 'pos':
-                pos, width, jast = True, False, False
+                pos, width, jast, csf = True, False, False, False
             elif parser.opt_type == 'gwidth':
-                pos, width, jast = False, True, False
+                pos, width, jast, csf = False, True, False, False
             elif parser.opt_type == 'jastrow':
-                pos, width, jast = False, False, True
+                pos, width, jast, csf = False, False, True, False
+            elif parser.opt_type == 'csf':
+                pos, width, jast, csf = False, False, False, True
 
             if UPDATE_POS and pos:
                 editor.update_pos(parser.opt_pos())
@@ -116,6 +123,8 @@ def edit_input():
                 editor.update_gauss_width(parser.opt_gauss_width())
             if UPDATE_JASTROW and jast:
                 editor.update_jastrow(parser.nctype, parser.opt_jastrow())
+            if UPDATE_CSF and csf:
+                editor.update_csf(parser.opt_csf_coef())
             
             if GENERATE_MC_CONFIGS:
                 editor.generate_mc_configs(

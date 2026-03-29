@@ -3,7 +3,7 @@ Input Generator class
 
 Author: Gokhan Oztarhan
 Created date: 18/06/2019
-Last modified: 24/05/2024
+Last modified: 29/03/2026
 """
 
 from os import urandom
@@ -182,13 +182,13 @@ class InputGenerator():
             self.nctype = 2
             self.iwtype[self.ind_edge] = 2
         
-    def set_opt(self):      
+    def set_opt(self):
         self.nparml = 0
         self.nparma = 4
-        self.nparmb = 6
+        self.nparmb = 5
         self.nparmc = 15
         self.nparmf = 0
-        self.nparmcsf = 0
+        self.nparmcsf = self.ncsf - 1
         self.nparms = 0
         self.nparmg = 0
         self.nparmo_1 = self.nbasis
@@ -198,27 +198,46 @@ class InputGenerator():
         else:
             self.nparmo_3 = self.nbasis
         
-        if self.opt_mode == 1:
+        if self.opt_mode == 0:
+            self.nparmcsf = 0
+        elif self.opt_mode == 1:
             self.nparma = 0
             self.nparmb = 0
             self.nparmc = 0
+            self.nparmcsf = 0
         elif self.opt_mode == 2:
             self.nparmo_1 = 0
             self.nparmo_2 = 0
+            self.nparmcsf = 0
         elif self.opt_mode == 3:
             self.nparmo_3 = 0
+            self.nparmcsf = 0
         elif self.opt_mode == 4:
-            self.nparma = 0
-            self.nparmb = 0
-            self.nparmc = 0
+            self.nparmo_1 = 0
+            self.nparmo_2 = 0
             self.nparmo_3 = 0
         elif self.opt_mode == 5:
             self.nparma = 0
             self.nparmb = 0
             self.nparmc = 0
+            self.nparmo_3 = 0
+            self.nparmcsf = 0
+        elif self.opt_mode == 6:
+            self.nparma = 0
+            self.nparmb = 0
+            self.nparmc = 0
             self.nparmo_1 = 0
             self.nparmo_2 = 0
-        elif self.opt_mode == 6:
+            self.nparmcsf = 0
+        elif self.opt_mode == 7:
+            self.nparmo_1 = 0
+            self.nparmo_2 = 0
+            self.nparmo_3 = 0
+            self.nparmcsf = 0
+        elif self.opt_mode == 8:
+            self.nparma = 0
+            self.nparmb = 0
+            self.nparmc = 0
             self.nparmo_1 = 0
             self.nparmo_2 = 0
             self.nparmo_3 = 0

@@ -58,8 +58,10 @@ class OutputParser():
         self.nelec = np.nan
         self.nup = np.nan
         self.ndn = np.nan
+        self.ndet = np.nan
         self.norb = np.nan
         self.nbasis = np.nan
+        self.ncsf = np.nan
         self.ncent = np.nan
         self.nctype = np.nan
         self.gndot_v0 = np.nan
@@ -277,8 +279,11 @@ class OutputParser():
         self.ncent = _feature('nctype,ncent =', data, -1, int)
         self._positions()
 
+        self.ndet = _feature('no. of determinants =', data, -1, int)
         self.norb = _feature('no. of orbitals =', data, -1, int)
         self.nbasis = _feature('no. of basis states =', data, -1, int)
+        
+        self.ncsf = _feature('ncsf=', data, -1, int)
         
         self.gndot_v0 = _feature('gndot_v0=', data, -1, float)
         self.gndot_rho = _feature('gndot_rho=', data, -1, float)
@@ -603,12 +608,18 @@ class OutputParser():
         jastrow = False
         pos = False
         gwidth = False
+        csf = False
         
         string = 'nparm,nparml,nparmj,nparmcsf,nparms,nparmg,nparme='
         nparmj = _feature(string, data, -5, int)
+        nparmcsf = _feature(string, data, -4, int)
+        
         if nparmj > 0:
             jastrow = True
-            
+        
+        if nparmcsf > 0:
+            csf = True
+        
         string = 'orbital parameters varied='
         nparmo_1, nparmo_2, nparmo_3 = _feature_all(string, data, -1, int)
         if ~np.isnan(nparmo_1) and ~np.isnan(nparmo_2):
@@ -624,19 +635,23 @@ class OutputParser():
                 self.constraint = False
 
         if jastrow and pos and gwidth:
-            self.opt_type = 'all'
+            self.opt_type = 'pos+gwidth+jastrow'
         elif pos and gwidth:
             self.opt_type = 'gwidth+pos'
         elif jastrow and gwidth:
             self.opt_type = 'gwidth+jastrow'
         elif jastrow and pos:
             self.opt_type = 'pos+jastrow'
+        elif jastrow and csf:
+            self.opt_type = 'csf+jastrow'
         elif pos:
             self.opt_type = 'pos'
         elif gwidth:
             self.opt_type = 'gwidth'
         elif jastrow:
             self.opt_type = 'jastrow'
+        elif csf:
+            self.opt_type = 'csf'
             
     def _positions(self):
         data = self.data
@@ -854,6 +869,32 @@ class OutputParser():
                 return line_a, line_b, line_c, best_wf_found
             else:
                 return None     
+        else:
+            return None
+
+    def opt_csf_coef(self):
+        """
+        Get optimized parameters as string
+        """
+        if self.data is not None:
+            string = '(csf_coef_best(icsf),icsf=1,ncsf)'
+            ind, line = get_lines(string, self.data[-50:])
+            best_wf_found = True
+            
+            if not line:
+                string = '(csf_coef_new(icsf),icsf=1,ncsf)'
+                ind, line = get_lines(string, self.data)
+                best_wf_found = False
+
+                if self.ind_best_wf >= 0 and line:
+                    line = [line[self.ind_best_wf]]
+                else:
+                    line = []
+
+            if line:
+                return line[-1], best_wf_found
+            else:
+                return None
         else:
             return None
             

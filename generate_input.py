@@ -5,7 +5,7 @@ Generating inputs for CHAMP program.
 
 Author: Gokhan Oztarhan
 Created date: 09/06/2019
-Last modified: 25/05/2024
+Last modified: 29/03/2026
 """
 
 import os
@@ -61,11 +61,11 @@ CONFIG = {
 
     # [lattice]
     'a': 50.0,
-    'n_side': 4,
+    'n_side': 1,
     'width': 4, # for nanoribbon
     'bc': 'xy', # for nanoribbon
     'lat_type': 'honeycomb',
-    'flk_type': 1, # 0: hexagonal_zigzag, 
+    'flk_type': 2, # 0: hexagonal_zigzag, 
                    # 1: hexagonal_armchair, 
                    # 2: triangular_zigzag, 
                    # 3: triangular_armchair, 
@@ -87,6 +87,10 @@ CONFIG = {
     # [orbital]
     'orb_dot_coef': 0, # 0: gauss, 1: orbitals read from orb_dot_coef file 
                        # >0: overwrites spin_order
+    
+    # [CSF]
+    'ncsf': 1,
+    'ndet_in_csf': 1,
 
     # [random seed champ]
     'irn': 'auto', # irn: a string of 16 digit integer
@@ -118,15 +122,16 @@ CONFIG = {
     'xfix_angle': 60, # fixed electron symmetry, default is 60
     
     # [opt]
-    'opt_mode': 0, # 0: all, 1: width+pos, 2: width+jastrow, 3: pos+jastrow
-                   # 4: only pos, 5: only width, 6: only jastrow
+    'opt_mode': 0, # 0: pos+gwidth+jastrow, 1: width+pos, 2: width+jastrow,
+                   # 3: pos+jastrow, 4: csf+jastrow, 5: only pos, 6: only width,
+                   # 7: only jastrow, 8: only csf
     'opt_constraint': 0,
     'nopt_iter': 20,
     'nblk_max': 25, # max. number of blocks which can be increased during opt.
-    'add_diag': 1e-4, # CHAMP uses abs(add_diag)
+    'add_diag': 1e-8, # CHAMP uses abs(add_diag)
                       # negative sign for fixed add_diag
                       # positive sign for optimization of add_diag
-    'p_var': 0.1, # 0: energy, 1:variance
+    'p_var': 0.0, # 0: energy, 1:variance
     'tol_energy': 1e-12, # energy tolerance to finish optimization
     'iopt': '00002', # last digit 2 is newton, 
                      # 01002 also a good choice, 31101 is linear (bad choice)
