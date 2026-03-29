@@ -7,6 +7,7 @@ Last modified: 29/03/2026
 """
 
 import os
+import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -16,6 +17,10 @@ from sklearn.neighbors import NearestNeighbors
 from .auconverter import AUConverter
 from .densityparser import parse_den, parse_pairden
 from .potential import gndot as gndot_pot
+
+
+# Silence ALL RuntimeWarnings globally in this process
+warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 
 class OutputParser():
@@ -991,7 +996,8 @@ class OutputParser():
             # since their denominator is the same.
             g_ss_corr = ss_sum / dd_sum
             
-        except (IndexError, AttributeError, TypeError, ValueError):
+        except (IndexError, AttributeError, TypeError, ValueError, \
+            ZeroDivisionError):
             g_ss_corr = np.nan
         
         return g_ss_corr
@@ -1038,7 +1044,8 @@ class OutputParser():
             # Edge polarization
             p_edge_pol = (s_edge - s_bulk) / (s_edge + s_bulk)
         
-        except (IndexError, AttributeError, TypeError, ValueError):
+        except (IndexError, AttributeError, TypeError, ValueError, \
+            ZeroDivisionError):
             p_edge_pol = np.nan
         
         return p_edge_pol
@@ -1089,7 +1096,8 @@ class OutputParser():
             # Average value of U_onsite over all sites
             U_onsite *= dx * dy * dx * dy / self.pos.shape[0]
             
-        except (IndexError, AttributeError, TypeError, ValueError):
+        except (IndexError, AttributeError, TypeError, ValueError, \
+            ZeroDivisionError):
             U_onsite = np.nan
         
         return U_onsite
@@ -1106,7 +1114,8 @@ class OutputParser():
             
             r_s = 1.0 / np.sqrt(np.pi * n_avg)
         
-        except (IndexError, AttributeError, TypeError, ValueError):
+        except (IndexError, AttributeError, TypeError, ValueError, \
+            ZeroDivisionError):
             r_s = np.nan
         
         return r_s
