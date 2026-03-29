@@ -3,7 +3,7 @@ CHAMP Data Reader and Extrapolated Estimator Calculator
 
 Author: Gokhan Oztarhan
 Created date: 24/06/2022
-Last modified: 25/05/2024
+Last modified: 29/03/2026
 """
 
 import sys
@@ -233,6 +233,9 @@ def den2d_ext(parser_vmc, parser_dmc):
         parser_dmc.uni_den_mean, \
         parser_dmc.uni_den_std = \
             parser_dmc._nelec_inside_uni(parser_dmc.den2d_t)
+        
+        # Calculate r_s for density
+        parser_dmc.r_s = parser_dmc._r_s(parser_dmc.den2d_t)
     
     except (TypeError, AttributeError) as err:
         print('%s in den2d_ext.' %type(err).__name__)

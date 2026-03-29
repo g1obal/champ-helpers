@@ -5,7 +5,7 @@ Calculate the ensemble averages of extrapolated data.
 
 Author: Gokhan Oztarhan
 Created date: 02/08/2022
-Last modified: 25/05/2024
+Last modified: 29/03/2026
 """
 
 import sys
@@ -298,6 +298,9 @@ def set_ss_corrs(parser_mean):
     parser_mean.uni_den_mean, \
     parser_mean.uni_den_std = \
         parser_mean._nelec_inside_uni(parser_mean.den2d_t)
+    
+    # Calculate r_s for density
+    parser_mean.r_s = parser_mean._r_s(parser_mean.den2d_t)
     
     return parser_mean
     

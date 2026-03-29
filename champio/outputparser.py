@@ -3,7 +3,7 @@ CHAMP Output Parser
 
 Author: Gokhan Oztarhan
 Created date: 27/01/2022
-Last modified: 27/05/2024
+Last modified: 29/03/2026
 """
 
 import os
@@ -38,6 +38,7 @@ class OutputParser():
         calculate_edge_pol=True,
         calculate_U_onsite=True,
         calculate_nelec_inside_uni=True,
+        calculate_r_s=True,
     ):
         self.parent_path = None
         self.run_dir = None
@@ -80,6 +81,7 @@ class OutputParser():
         self.edge_pol_pairden = np.nan
         self.U_onsite_den = np.nan
         self.U_onsite_pairden = np.nan
+        self.r_s = np.nan
         self.tot_E_1st = np.nan
         self.tot_E = np.nan 
         self.tot_E_err = np.nan
@@ -173,6 +175,9 @@ class OutputParser():
         # Boolean for calculation of nelec_inside and density uniformity
         self.calculate_nelec_inside_uni = calculate_nelec_inside_uni
         
+         # Boolean for calculation of r_s
+        self.calculate_r_s = calculate_r_s
+        
     def dataframe(self):
         data = {}
         for feature in self.features:
@@ -227,6 +232,9 @@ class OutputParser():
             if self.calculate_nelec_inside_uni:
                 self.nelec_inside, self.uni_den_mean, self.uni_den_std = \
                     self._nelec_inside_uni(self.den2d_t)
+            
+            if self.calculate_r_s:
+                self.r_s = self._r_s(self.den2d_t)
                 
             self._cpu_time()
             
@@ -1085,6 +1093,23 @@ class OutputParser():
             U_onsite = np.nan
         
         return U_onsite
+
+    def _r_s(self, den_t):
+        try:
+            # dx and dy for integration
+            dx = den_t[1,0,0] - den_t[0,0,0]
+            dy = den_t[0,1,1] - den_t[0,0,1]
+            
+            n_avg = np.trapz(
+                np.trapz(den_t[:,:,2]**2, dx=dx, axis=0), dx=dy, axis=0
+            ) / self.nelec
+            
+            r_s = 1.0 / np.sqrt(np.pi * n_avg)
+        
+        except (IndexError, AttributeError, TypeError, ValueError):
+            r_s = np.nan
+        
+        return r_s
     
     #-----------------------------------#
     # Class utilities:                  #
